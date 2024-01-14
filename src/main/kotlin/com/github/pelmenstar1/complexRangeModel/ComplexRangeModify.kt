@@ -2,7 +2,7 @@ package com.github.pelmenstar1.complexRangeModel
 
 class ComplexRangeModify<T : Comparable<T>>(
     support: RangeFragmentSupport<T>,
-    fragments: Array<RangeFragment<T>>
+    fragments: RangeFragmentList<T>
 ): ComplexRangeBaseBuilder<T>(support, fragments) {
     fun set(fragment: RangeFragment<T>) {
         includeFragment(fragment)
@@ -10,10 +10,6 @@ class ComplexRangeModify<T : Comparable<T>>(
 
     fun unset(fragment: RangeFragment<T>) {
         excludeFragment(fragment)
-    }
-
-    fun getResultFragments(): Array<RangeFragment<T>> {
-        return fragments
     }
 }
 

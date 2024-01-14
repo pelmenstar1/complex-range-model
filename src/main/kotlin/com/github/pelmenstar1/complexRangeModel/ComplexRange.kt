@@ -1,7 +1,7 @@
 package com.github.pelmenstar1.complexRangeModel
 
 class ComplexRange<T : Comparable<T>> internal constructor(
-    private val fragments: Array<RangeFragment<T>>
+    private val fragments: RangeFragmentList<T>
 ) : Collection<RangeFragment<T>> {
     override val size: Int
         get() = fragments.size
@@ -9,10 +9,10 @@ class ComplexRange<T : Comparable<T>> internal constructor(
     override fun isEmpty() = fragments.isEmpty()
 
     fun modify(support: RangeFragmentSupport<T>, block: ComplexRangeModify<T>.() -> Unit): ComplexRange<T> {
-        val mod = ComplexRangeModify(support, fragments)
-        mod.block()
+        val copied = fragments.copyOf()
+        ComplexRangeModify(support, copied).also(block)
 
-        return ComplexRange(mod.getResultFragments())
+        return ComplexRange(copied)
     }
 
     operator fun get(index: Int): RangeFragment<T> {
@@ -28,11 +28,11 @@ class ComplexRange<T : Comparable<T>> internal constructor(
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is ComplexRange<*> && fragments.contentEquals(other.fragments)
+        return other is ComplexRange<*> && fragments == other.fragments
     }
 
     override fun hashCode(): Int {
-        return fragments.contentHashCode()
+        return fragments.hashCode()
     }
 
     override fun toString(): String {
@@ -56,7 +56,7 @@ class ComplexRange<T : Comparable<T>> internal constructor(
     }
 
     companion object {
-        fun<T : Comparable<T>> empty() = ComplexRange<T>(emptyArray())
+        fun<T : Comparable<T>> empty() = ComplexRange<T>(RangeFragmentList())
     }
 }
 

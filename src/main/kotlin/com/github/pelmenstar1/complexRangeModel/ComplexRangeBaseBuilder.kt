@@ -1,27 +1,27 @@
 package com.github.pelmenstar1.complexRangeModel
 
 abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
-    protected var fragments: Array<RangeFragment<T>>
+    protected val fragments: RangeFragmentList<T>
     private val support: RangeFragmentSupport<T>
 
     protected constructor(support: RangeFragmentSupport<T>) {
         this.support = support
-        fragments = emptyArray()
+        fragments = RangeFragmentList()
     }
 
-    protected constructor(support: RangeFragmentSupport<T>, fragments: Array<RangeFragment<T>>) {
+    protected constructor(support: RangeFragmentSupport<T>, fragments: RangeFragmentList<T>) {
         this.support = support
         this.fragments = fragments
     }
 
     protected fun includeFragment(fragment: RangeFragment<T>) {
         if (fragments.isEmpty()) {
-            fragments = arrayOf(fragment)
+            fragments.add(fragment)
             return
         }
 
-        for (i in fragments.indices) {
-            val thisFragment = fragments[i]
+        fragments.forEachNode { node ->
+            val thisFragment = node.value
 
             if (thisFragment == fragment) {
                 // No need for creating new array if we're adding the same fragment to the array
@@ -30,7 +30,7 @@ abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
 
             val unitedFragment = thisFragment.uniteWith(fragment)
             if (unitedFragment != null) {
-                includeFragmentWithUniting(unitedFragment, i)
+                includeFragmentWithUniting(unitedFragment, node)
                 return
             }
         }
@@ -40,96 +40,85 @@ abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
         includeFragmentWithoutUniting(fragment)
     }
 
-    private fun includeFragmentWithUniting(fragmentUnitedWithStart: RangeFragment<T>, startIndex: Int) {
+    private fun includeFragmentWithUniting(fragmentUnitedWithStart: RangeFragment<T>, startNode: RangeFragmentList.Node<T>) {
         var totalUnitedFragment = fragmentUnitedWithStart
 
-        // If the loop below is not ended by finding the range that cannot be united with currentOverlapFragment,
-        // then all ranges, starting from startIndex, should be united
-        // The index is exclusive.
-        var endIndex = fragments.size
+        // Last node cannot be null because the list is not empty.
+        var endNode = fragments.tail
 
-        for (i in (startIndex + 1) until fragments.size) {
-            val currentFragment = fragments[i]
+        fragments.forEachNodeStartingWith(startNode.next) { node ->
+            val currentFragment = node.value
 
             val unitedFragment = totalUnitedFragment.uniteWith(currentFragment)
             if (unitedFragment != null) {
                 totalUnitedFragment = unitedFragment
             } else {
-                endIndex = i
-                break
+                endNode = node.previous
+
+                // Bail out from the loop
+                return@forEachNodeStartingWith
             }
         }
 
-        replaceFragmentsWith(totalUnitedFragment, startIndex, endIndex)
-    }
-
-    private fun replaceFragmentsWith(fragment: RangeFragment<T>, startIndex: Int, endIndex: Int) {
-        val newSize = fragments.size - (endIndex - startIndex - 1)
-        val newFragments = arrayOfFragmentsUnsafe(newSize)
-
-        // Copy elements before startIndex
-        fragments.copyInto(newFragments, destinationOffset = 0, endIndex = startIndex)
-        newFragments[startIndex] = fragment
-
-        // Copy elements from fragments after endIndex to newFragments after startIndex
-        fragments.copyInto(
-            newFragments,
-            destinationOffset = startIndex + 1,
-            startIndex = endIndex,
-            endIndex = fragments.size
-        )
-
-        // All values are not null
-        fragments = newFragments
+        fragments.replaceBetweenWith(totalUnitedFragment, startNode, endNode!!)
     }
 
     private fun includeFragmentWithoutUniting(fragment: RangeFragment<T>) {
-        val insertIndex = findNewFragmentInsertIndex(fragment)
+        val insertNode = findNewFragmentInsertAfterNode(fragment)
 
-        insertFragment(insertIndex, fragment)
+        if (insertNode == null) {
+            fragments.insertBeforeHead(fragment)
+        } else {
+            fragments.insertAfterNode(fragment, insertNode)
+        }
     }
 
-    private fun findNewFragmentInsertIndex(fragment: RangeFragment<T>): Int {
+    // Tries to find the node after which the fragment should be inserted. It returns null, when
+    // the fragment should be inserted before the head.
+    private fun findNewFragmentInsertAfterNode(fragment: RangeFragment<T>): RangeFragmentList.Node<T>? {
         // It assumes that given fragment doesn't overlap with any of current fragments
-        for (i in fragments.indices) {
-            if (fragment.start < fragments[i].start) {
-                return i - 1
+        fragments.forEachNode { node ->
+            if (fragment.start < node.value.start) {
+                return node.previous
             }
         }
 
-        return fragments.size - 1
+        return fragments.tail
     }
 
     protected fun excludeFragment(fragment: RangeFragment<T>) {
-        val affectedRangeStart = indexOfFirstOverlapFragment(fragment)
-        val affectedRangeEnd = indexOfLastOverlapFragment(fragment)
+        val affectedStartNode = findFirstOverlapFragmentNode(fragment)
+        val affectedEndNode = findLastOverlapFragmentNode(fragment)
 
-        if (affectedRangeStart == -1) {
+        if (affectedStartNode == null || affectedEndNode == null) {
             return
         }
 
-        if (affectedRangeStart == affectedRangeEnd) {
-            excludeFragmentWithOneAffected(fragment, affectedRangeStart)
+        if (affectedStartNode === affectedEndNode) {
+            excludeFragmentWithOneAffected(fragment, affectedStartNode)
         } else {
-            excludeFragmentWithRangeAffected(fragment, affectedRangeStart, affectedRangeEnd)
+            excludeFragmentWithRangeAffected(fragment, affectedStartNode, affectedEndNode)
         }
     }
 
-    private fun excludeFragmentWithOneAffected(excludeFragment: RangeFragment<T>, index: Int) {
-        val affectedFragment = fragments[index]
+    private fun excludeFragmentWithOneAffected(
+        excludeFragment: RangeFragment<T>,
+        affectedNode: RangeFragmentList.Node<T>
+    ) {
+        val affectedFragment = affectedNode.value
 
         if (excludeFragment.containsCompletely(affectedFragment)) {
-            // Simply remove the whole range
-            removeFragmentRange(index, index + 1)
+            // Simply remove the whole fragment
+            fragments.removeNode(affectedNode)
         } else if (affectedFragment.containsExclusive(excludeFragment)) {
-            splitFragmentWithExcludingOtherFragment(index, excludeFragment)
+            splitFragmentWithExcludingOtherFragment(affectedNode, excludeFragment)
         } else if (affectedFragment.leftContains(excludeFragment)) {
             // Something like:
             // affectedFragment:    [] [] | [] []
             // excludeFragment:  [] [] [] |
             // result:                    | [] []
             // So we need to remove the part where these fragments intersect
-            fragments[index] = affectedFragment.withStart(support.next(excludeFragment.endInclusive))
+            affectedNode.value = affectedFragment.withStart(support.next(excludeFragment.endInclusive))
         } else {
             // affectedFragment is not fragmentToRemove, affectedFragment doesn't contain the fragmentToRemove (exclusively)
             // and the affectedFragment doesn't left-contains the fragmentToRemove,
@@ -139,37 +128,35 @@ abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
             // affectedFragment: [] [] | [] []
             // excludeFragment:        | [] [] []
             // result:           [] [] |
-            fragments[index] = affectedFragment.withEnd(support.previous(excludeFragment.start))
+            affectedNode.value = affectedFragment.withEnd(support.previous(excludeFragment.start))
         }
     }
 
     private fun excludeFragmentWithRangeAffected(
         excludeFragment: RangeFragment<T>,
-        affectedStartIndex: Int,
-        affectedEndIndexInclusive: Int
+        affectedStartNode: RangeFragmentList.Node<T>,
+        affectedEndNode: RangeFragmentList.Node<T>
     ) {
-        val affectedStartFrag = fragments[affectedStartIndex]
-        val affectedEndFrag = fragments[affectedEndIndexInclusive]
+        val affectedStartFrag = affectedStartNode.value
+        val affectedEndFrag = affectedEndNode.value
 
-        val removalStartIndex: Int
-
-        // Exclusive index
-        val removalEndIndex: Int
+        val removalStartNode: RangeFragmentList.Node<T>?
+        val removalEndNode: RangeFragmentList.Node<T>?
 
         if (excludeFragment.start <= affectedStartFrag.start) {
             // Something like:
             // affectedStartFrag:    [] [] []
             // excludeFragment:   [] [] [] [] ...
             // So we need to remove the whole affectedStartFrag
-            removalStartIndex = affectedStartIndex
+            removalStartNode = affectedStartNode
         } else {
             // Something like:
             // affectedStartFrag: [] [] | [] [] []
             // excludeFragment:         | [] [] [] ...
             // result:            [] []
             // So we need to narrow the affectedStartFrag and remove starting from the next fragment
-            removalStartIndex = affectedStartIndex + 1
-            fragments[affectedStartIndex] = affectedStartFrag.withEndExclusive(excludeFragment.start)
+            removalStartNode = affectedStartNode.next
+            affectedStartNode.value = affectedStartFrag.withEndExclusive(excludeFragment.start)
         }
 
         if (excludeFragment.endInclusive >= affectedEndFrag.endInclusive) {
@@ -177,69 +164,44 @@ abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
             // affectedEndFrag:     [] [] []
             // excludeFragment: ... [] [] [] []
             // So we need to remove whole affectedEndFrag
-            removalEndIndex = affectedEndIndexInclusive + 1
+            removalEndNode = affectedEndNode
         } else {
             // Something like:
             // affectedEndFrag:     [] [] | [] []
             // excludeFragment: ... [] [] |
             // result:                      [] []
             // So we need no narrow affectedEndFrag and remove ending with the previous fragment
-            removalEndIndex = affectedEndIndexInclusive
-            fragments[affectedEndIndexInclusive] = affectedEndFrag.withStart(excludeFragment.endExclusive)
+            removalEndNode = affectedEndNode.previous
+            affectedEndNode.value = affectedEndFrag.withStart(excludeFragment.endExclusive)
         }
 
-        if (removalStartIndex < removalEndIndex) {
-            removeFragmentRange(removalStartIndex, removalEndIndex)
+        if (removalStartNode != null && removalEndNode != null) {
+            fragments.removeBetween(removalStartNode, removalEndNode)
         }
     }
 
-    private fun splitFragmentWithExcludingOtherFragment(splitIndex: Int, excludeFragment: RangeFragment<T>) {
-        // Range at splitIndex: [] [] [] [] [] []
+    private fun splitFragmentWithExcludingOtherFragment(
+        splitNode: RangeFragmentList.Node<T>,
+        excludeFragment: RangeFragment<T>
+    ) {
+        // Range in splitNode: [] [] [] [] [] []
         // excludeFragment:           [] []
         // result:              [] []       [] []
-        val splitFragment = fragments[splitIndex]
+        val splitFragment = splitNode.value
 
         // Change range at splitIndex to the left part of the split.
-        fragments[splitIndex] = splitFragment.withEndExclusive(excludeFragment.start)
+        splitNode.value = splitFragment.withEndExclusive(excludeFragment.start)
 
         // Insert the right part of the split after splitIndex
-        insertFragment(splitIndex, splitFragment.withStart(excludeFragment.endExclusive))
+        fragments.insertAfterNode(splitFragment.withStart(excludeFragment.endExclusive), splitNode)
     }
 
-    private fun insertFragment(index: Int, fragment: RangeFragment<T>) {
-        val newFragments = arrayOfFragmentsUnsafe(fragments.size + 1)
-
-        // Copy elements before insertAfterIndex
-        fragments.copyInto(newFragments, destinationOffset = 0, endIndex = index + 1)
-
-        newFragments[index + 1] = fragment
-
-        // Copy elements after insertAfterIndex
-        fragments.copyInto(
-            newFragments,
-            destinationOffset = index + 2,
-            startIndex = index + 1
-        )
-
-        // All values are not null
-        fragments = newFragments
+    private fun findFirstOverlapFragmentNode(fragment: RangeFragment<T>): RangeFragmentList.Node<T>? {
+        return fragments.findFirstNode { fragment.overlapsWith(it) }
     }
 
-    private fun removeFragmentRange(startIndex: Int, endIndex: Int) {
-        val newSize = fragments.size - (endIndex - startIndex)
-        val newFragments = arrayOfFragmentsUnsafe(newSize)
-        fragments.copyInto(newFragments, endIndex = startIndex)
-        fragments.copyInto(newFragments, destinationOffset = startIndex, startIndex = endIndex)
-
-        fragments = newFragments
-    }
-
-    private fun indexOfFirstOverlapFragment(fragment: RangeFragment<T>): Int {
-        return fragments.indexOfFirst { fragment.overlapsWith(it) }
-    }
-
-    private fun indexOfLastOverlapFragment(fragment: RangeFragment<T>): Int {
-        return fragments.indexOfLast { fragment.overlapsWith(it) }
+    private fun findLastOverlapFragmentNode(fragment: RangeFragment<T>): RangeFragmentList.Node<T>? {
+        return fragments.findLastNode { fragment.overlapsWith(it) }
     }
 
     @Suppress("UNCHECKED_CAST")
