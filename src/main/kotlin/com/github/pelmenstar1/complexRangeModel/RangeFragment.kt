@@ -1,7 +1,5 @@
 package com.github.pelmenstar1.complexRangeModel
 
-import java.util.LinkedList
-
 abstract class RangeFragment<T : Comparable<T>>(val start: T, val endInclusive: T) {
     val endExclusive: T
         get() = getNextValue(endInclusive)
@@ -77,7 +75,11 @@ abstract class RangeFragment<T : Comparable<T>>(val start: T, val endInclusive: 
     protected abstract fun getNextValue(value: T): T
 }
 
-private class IntRangeFragment(start: Int, endInclusive: Int, @Suppress("UNUSED_PARAMETER") marker: Boolean) : RangeFragment<Int>(start, endInclusive) {
+private class IntRangeFragment(
+    start: Int,
+    endInclusive: Int,
+    @Suppress("UNUSED_PARAMETER") marker: Boolean
+) : RangeFragment<Int>(start, endInclusive) {
     override fun isNextToOther(a: Int, b: Int): Boolean {
         return a + 1 == b
     }

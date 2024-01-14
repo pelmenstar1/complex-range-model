@@ -241,7 +241,7 @@ class RangeFragmentList<T : Comparable<T>> : MutableCollection<RangeFragment<T>>
     }
 
     override fun equals(other: Any?): Boolean {
-        if(other !is RangeFragmentList<*>) {
+        if (other !is RangeFragmentList<*>) {
             return false
         }
 

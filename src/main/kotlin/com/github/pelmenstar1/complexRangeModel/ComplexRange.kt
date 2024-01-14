@@ -8,9 +8,9 @@ class ComplexRange<T : Comparable<T>> internal constructor(
 
     override fun isEmpty() = fragments.isEmpty()
 
-    fun modify(support: RangeFragmentSupport<T>, block: ComplexRangeModify<T>.() -> Unit): ComplexRange<T> {
+    fun modify(block: ComplexRangeModify<T>.() -> Unit): ComplexRange<T> {
         val copied = fragments.copyOf()
-        ComplexRangeModify(support, copied).also(block)
+        ComplexRangeModify(copied).also(block)
 
         return ComplexRange(copied)
     }
@@ -56,23 +56,16 @@ class ComplexRange<T : Comparable<T>> internal constructor(
     }
 
     companion object {
-        fun<T : Comparable<T>> empty() = ComplexRange<T>(RangeFragmentList())
+        fun <T : Comparable<T>> empty() = ComplexRange<T>(RangeFragmentList())
     }
 }
 
-fun ComplexRange<Int>.modify(block: ComplexRangeModify<Int>.() -> Unit): ComplexRange<Int> {
-    return modify(IntRangeFragmentSupport, block)
-}
-
-inline fun<T : Comparable<T>> ComplexRange(
-    support: RangeFragmentSupport<T>,
-    block: ComplexRangeBuilder<T>.() -> Unit
-): ComplexRange<T> {
-    return ComplexRangeBuilder(support).also(block).build()
+inline fun <T : Comparable<T>> ComplexRange(block: ComplexRangeBuilder<T>.() -> Unit): ComplexRange<T> {
+    return ComplexRangeBuilder<T>().also(block).build()
 }
 
 inline fun IntComplexRange(block: ComplexRangeBuilder<Int>.() -> Unit): ComplexRange<Int> {
-    return ComplexRange(IntRangeFragmentSupport, block)
+    return ComplexRange(block)
 }
 
 fun IntComplexRange(ranges: Array<out IntRange>): ComplexRange<Int> {

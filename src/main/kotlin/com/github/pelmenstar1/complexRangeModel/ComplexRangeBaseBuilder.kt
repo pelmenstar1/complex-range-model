@@ -2,15 +2,12 @@ package com.github.pelmenstar1.complexRangeModel
 
 abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
     protected val fragments: RangeFragmentList<T>
-    private val support: RangeFragmentSupport<T>
 
-    protected constructor(support: RangeFragmentSupport<T>) {
-        this.support = support
+    protected constructor() {
         fragments = RangeFragmentList()
     }
 
-    protected constructor(support: RangeFragmentSupport<T>, fragments: RangeFragmentList<T>) {
-        this.support = support
+    protected constructor(fragments: RangeFragmentList<T>) {
         this.fragments = fragments
     }
 
@@ -40,7 +37,10 @@ abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
         includeFragmentWithoutUniting(fragment)
     }
 
-    private fun includeFragmentWithUniting(fragmentUnitedWithStart: RangeFragment<T>, startNode: RangeFragmentList.Node<T>) {
+    private fun includeFragmentWithUniting(
+        fragmentUnitedWithStart: RangeFragment<T>,
+        startNode: RangeFragmentList.Node<T>
+    ) {
         var totalUnitedFragment = fragmentUnitedWithStart
 
         // Last node cannot be null because the list is not empty.
@@ -118,7 +118,7 @@ abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
             // excludeFragment:  [] [] [] |
             // result:                    | [] []
             // So we need to remove the part where these fragments intersect
-            affectedNode.value = affectedFragment.withStart(support.next(excludeFragment.endInclusive))
+            affectedNode.value = affectedFragment.withStart(excludeFragment.endExclusive)
         } else {
             // affectedFragment is not fragmentToRemove, affectedFragment doesn't contain the fragmentToRemove (exclusively)
             // and the affectedFragment doesn't left-contains the fragmentToRemove,
@@ -128,7 +128,7 @@ abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
             // affectedFragment: [] [] | [] []
             // excludeFragment:        | [] [] []
             // result:           [] [] |
-            affectedNode.value = affectedFragment.withEnd(support.previous(excludeFragment.start))
+            affectedNode.value = affectedFragment.withEndExclusive(excludeFragment.start)
         }
     }
 
@@ -202,10 +202,5 @@ abstract class ComplexRangeBaseBuilder<T : Comparable<T>> {
 
     private fun findLastOverlapFragmentNode(fragment: RangeFragment<T>): RangeFragmentList.Node<T>? {
         return fragments.findLastNode { fragment.overlapsWith(it) }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun arrayOfFragmentsUnsafe(size: Int): Array<RangeFragment<T>> {
-        return arrayOfNulls<RangeFragment<T>>(size) as Array<RangeFragment<T>>
     }
 }

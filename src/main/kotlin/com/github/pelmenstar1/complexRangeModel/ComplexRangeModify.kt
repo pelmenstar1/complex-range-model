@@ -1,9 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel
 
-class ComplexRangeModify<T : Comparable<T>>(
-    support: RangeFragmentSupport<T>,
-    fragments: RangeFragmentList<T>
-): ComplexRangeBaseBuilder<T>(support, fragments) {
+class ComplexRangeModify<T : Comparable<T>>(fragments: RangeFragmentList<T>) : ComplexRangeBaseBuilder<T>(fragments) {
     fun set(fragment: RangeFragment<T>) {
         includeFragment(fragment)
     }
