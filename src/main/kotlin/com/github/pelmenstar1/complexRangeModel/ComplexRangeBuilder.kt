@@ -1,17 +1,11 @@
 package com.github.pelmenstar1.complexRangeModel
 
-class ComplexRangeBuilder<T : Comparable<T>> : ComplexRangeBaseBuilder<T>() {
-    fun fragment(value: RangeFragment<T>) {
-        includeFragment(value)
-    }
-
-    fun build(): ComplexRange<T> {
-        return ComplexRange(fragments)
-    }
+interface ComplexRangeBuilder<T : Comparable<T>> {
+    fun fragment(value: RangeFragment<T>)
 }
 
 fun ComplexRangeBuilder<Int>.fragment(range: IntRange) {
-    fragment(IntRangeFragment(range))
+    fragment(range.first, range.last)
 }
 
 fun ComplexRangeBuilder<Int>.fragment(start: Int, endInclusive: Int) {

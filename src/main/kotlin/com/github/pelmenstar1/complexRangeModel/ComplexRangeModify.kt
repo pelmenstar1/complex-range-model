@@ -1,13 +1,8 @@
 package com.github.pelmenstar1.complexRangeModel
 
-class ComplexRangeModify<T : Comparable<T>>(fragments: RangeFragmentList<T>) : ComplexRangeBaseBuilder<T>(fragments) {
-    fun set(fragment: RangeFragment<T>) {
-        includeFragment(fragment)
-    }
-
-    fun unset(fragment: RangeFragment<T>) {
-        excludeFragment(fragment)
-    }
+interface ComplexRangeModify<T : Comparable<T>> {
+    fun set(fragment: RangeFragment<T>)
+    fun unset(fragment: RangeFragment<T>)
 }
 
 fun ComplexRangeModify<Int>.set(start: Int, endInclusive: Int) {

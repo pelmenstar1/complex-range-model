@@ -1,6 +1,8 @@
-package com.github.pelmenstar1.complexRangeModel
+package com.github.pelmenstar1.complexRangeModel.generic
 
-class RangeFragmentList<T : Comparable<T>> : MutableCollection<RangeFragment<T>> {
+import com.github.pelmenstar1.complexRangeModel.RangeFragment
+
+class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragment<T>> {
     class Node<T : Comparable<T>>(var value: RangeFragment<T>) {
         var previous: Node<T>? = null
         var next: Node<T>? = null
@@ -222,8 +224,8 @@ class RangeFragmentList<T : Comparable<T>> : MutableCollection<RangeFragment<T>>
         }
     }
 
-    fun copyOf(): RangeFragmentList<T> {
-        val currentHead = head ?: return RangeFragmentList()
+    fun copyOf(): RangeFragmentLinkedList<T> {
+        val currentHead = head ?: return RangeFragmentLinkedList()
 
         val newHead = Node(currentHead.value)
         var newCurrent = newHead
@@ -237,11 +239,11 @@ class RangeFragmentList<T : Comparable<T>> : MutableCollection<RangeFragment<T>>
             newCurrent = newNode
         }
 
-        return RangeFragmentList(newHead, newCurrent)
+        return RangeFragmentLinkedList(newHead, newCurrent)
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is RangeFragmentList<*>) {
+        if (other !is RangeFragmentLinkedList<*>) {
             return false
         }
 
@@ -295,7 +297,7 @@ class RangeFragmentList<T : Comparable<T>> : MutableCollection<RangeFragment<T>>
     }
 
     private class IteratorImpl<T : Comparable<T>>(
-        private val list: RangeFragmentList<T>
+        private val list: RangeFragmentLinkedList<T>
     ) : MutableIterator<RangeFragment<T>> {
         private var previousNode: Node<T>? = null
         private var currentNode: Node<T>? = list.head

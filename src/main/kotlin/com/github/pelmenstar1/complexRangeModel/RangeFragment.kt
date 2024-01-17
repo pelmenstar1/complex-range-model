@@ -1,5 +1,7 @@
 package com.github.pelmenstar1.complexRangeModel
 
+import com.github.pelmenstar1.complexRangeModel.bits.PackedIntRange
+
 abstract class RangeFragment<T : Comparable<T>>(val start: T, val endInclusive: T) {
     val endExclusive: T
         get() = getNextValue(endInclusive)
@@ -98,4 +100,8 @@ fun IntRangeFragment(start: Int, endInclusive: Int): RangeFragment<Int> {
 
 fun IntRangeFragment(range: IntRange): RangeFragment<Int> {
     return IntRangeFragment(range.first, range.last)
+}
+
+fun IntRangeFragment(range: PackedIntRange): RangeFragment<Int> {
+    return IntRangeFragment(range.start, range.endInclusive)
 }

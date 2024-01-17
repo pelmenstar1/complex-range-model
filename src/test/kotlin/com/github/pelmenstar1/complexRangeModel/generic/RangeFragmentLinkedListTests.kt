@@ -1,10 +1,12 @@
-package com.github.pelmenstar1.complexRangeModel
+package com.github.pelmenstar1.complexRangeModel.generic
 
+import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
+import com.github.pelmenstar1.complexRangeModel.RangeFragment
 import kotlin.test.*
 
-class RangeFragmentListTests {
-    private fun createList(ranges: Array<IntRange>): RangeFragmentList<Int> {
-        return RangeFragmentList<Int>().apply {
+class RangeFragmentLinkedListTests {
+    private fun createList(ranges: Array<IntRange>): RangeFragmentLinkedList<Int> {
+        return RangeFragmentLinkedList<Int>().apply {
             ranges.forEach { add(IntRangeFragment(it)) }
         }
     }
@@ -402,7 +404,7 @@ class RangeFragmentListTests {
         testCase(arrayOf(1..1, 2..2, 3..3), expected = "RangeFragmentList([1, 1], [2, 2], [3, 3])")
     }
 
-    private fun validateList(list: RangeFragmentList<Int>, expectedElements: Array<IntRange>) {
+    private fun validateList(list: RangeFragmentLinkedList<Int>, expectedElements: Array<IntRange>) {
         val expectedSize = expectedElements.size
         val head = list.head
         val tail = list.tail
@@ -424,8 +426,8 @@ class RangeFragmentListTests {
 
         var index = 0
 
-        var previous: RangeFragmentList.Node<Int>? = null
-        var current: RangeFragmentList.Node<Int>? = head
+        var previous: RangeFragmentLinkedList.Node<Int>? = null
+        var current: RangeFragmentLinkedList.Node<Int>? = head
 
         while (current != null) {
             val expectedValue = IntRangeFragment(expectedElements[index])
@@ -443,7 +445,7 @@ class RangeFragmentListTests {
         assertEquals(expectedSize, index)
     }
 
-    private fun RangeFragmentList<Int>.getIntRanges(): Array<IntRange> {
+    private fun RangeFragmentLinkedList<Int>.getIntRanges(): Array<IntRange> {
         return map { toIntRange(it) }.toTypedArray()
     }
 

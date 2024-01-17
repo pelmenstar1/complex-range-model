@@ -4,11 +4,19 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
-class ComplexRangeTests {
+abstract class BaseComplexRangeTests {
+    abstract fun createRange(block: ComplexRangeBuilder<Int>.() -> Unit): ComplexRange<Int>
+
+    private fun createRange(ranges: Array<IntRange>): ComplexRange<Int> {
+        return createRange {
+            ranges.forEach { fragment(it) }
+        }
+    }
+
     @Test
     fun toStringTest() {
         fun testCase(fragmentRanges: Array<IntRange>, expectedResult: String) {
-            val range = IntComplexRange(fragmentRanges)
+            val range = createRange(fragmentRanges)
 
             val actualResult = range.toString()
             assertEquals(expectedResult, actualResult)
@@ -21,7 +29,7 @@ class ComplexRangeTests {
 
     @Test
     fun modifySetTest() {
-        val range = IntComplexRange {
+        val range = createRange {
             fragment(0, 2)
         }
 
@@ -41,7 +49,7 @@ class ComplexRangeTests {
     @Test
     fun modifyUnsetTest() {
         fun testCase(initialRanges: Array<IntRange>, unsetRange: IntRange, expectedRanges: Array<IntRange>) {
-            val initial = IntComplexRange(initialRanges)
+            val initial = createRange(initialRanges)
             val rangeAfterUnset = initial.modify {
                 unset(unsetRange)
             }
