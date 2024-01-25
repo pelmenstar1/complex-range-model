@@ -51,20 +51,24 @@ class ComplexRangeTransitionManagerTests {
         }
     }
 
+    private fun transitionTestHelper(
+        origin: Array<IntRange>,
+        dest: Array<IntRange>,
+        transitionBuild: TransitionBuilder<Int>.() -> Unit
+    ) {
+        val originComplexRange = IntComplexRange(origin)
+        val destComplexRange = IntComplexRange(dest)
+
+        val actualTransition = createTransition(originComplexRange, destComplexRange)
+
+        assertGroupsEquals(actualTransition, transitionBuild)
+    }
+
     @Test
     fun createNonEmptyToNonEmpty_singleGroupTest(){
-        fun testCase(origin: Array<IntRange>, dest: Array<IntRange>, transitionBuild: TransitionBuilder<Int>.() -> Unit) {
-            val originComplexRange = IntComplexRange(origin)
-            val destComplexRange = IntComplexRange(dest)
-
-            val actualTransition = createTransition(originComplexRange, destComplexRange)
-
-            assertGroupsEquals(actualTransition, transitionBuild)
-        }
-
         // Join + Transform
 
-        testCase(
+        transitionTestHelper(
             origin = arrayOf(1..2, 4..5),
             dest = arrayOf(2..4)
         ) {
@@ -74,7 +78,7 @@ class ComplexRangeTransitionManagerTests {
             }
         }
 
-        testCase(
+        transitionTestHelper(
             origin = arrayOf(1..2, 4..4, 6..6),
             dest = arrayOf(2..7)
         ) {
@@ -84,7 +88,7 @@ class ComplexRangeTransitionManagerTests {
             }
         }
 
-        testCase(
+        transitionTestHelper(
             origin = arrayOf(1..1, 3..3),
             dest = arrayOf(1..3)
         ) {
@@ -95,7 +99,7 @@ class ComplexRangeTransitionManagerTests {
 
         // Join + Transform + Split
 
-        testCase(
+        transitionTestHelper(
             origin = arrayOf(1..2, 4..11),
             dest = arrayOf(2..4, 7..10)
         ) {
@@ -108,7 +112,7 @@ class ComplexRangeTransitionManagerTests {
 
         // Transform
 
-        testCase(
+        transitionTestHelper(
             origin = arrayOf(1..2),
             dest = arrayOf(2..3)
         ) {
@@ -118,7 +122,7 @@ class ComplexRangeTransitionManagerTests {
         }
 
         // Ignore same fragments
-        testCase(
+        transitionTestHelper(
             origin = arrayOf(1..2),
             dest = arrayOf(1..2)
         ) {
@@ -126,13 +130,39 @@ class ComplexRangeTransitionManagerTests {
 
         // Transform + Split
 
-        testCase(
+        transitionTestHelper(
             origin = arrayOf(1..5),
             dest = arrayOf(2..2, 4..4)
         ) {
             group {
                 transform(origin = 1..5, dest = 2..4)
                 split(originRange = 2..4, destRanges = arrayOf(2..2, 4..4))
+            }
+        }
+    }
+
+    @Test
+    fun createNonEmptyToNonEmpty_multipleGroupsTest() {
+        // Ignore same elements
+        transitionTestHelper(
+            origin = arrayOf(1..2, 6..7),
+            dest = arrayOf(2..3, 6..7)
+        ) {
+            group {
+                transform(origin = 1..2, dest = 2..3)
+            }
+        }
+
+        transitionTestHelper(
+            origin = arrayOf(1..2, 6..7, 9..10),
+            dest = arrayOf(2..3, 6..7, 10..11)
+        ) {
+            group {
+                transform(origin = 1..2, dest = 2..3)
+            }
+
+            group {
+                transform(origin = 9..10, dest = 10..11)
             }
         }
     }

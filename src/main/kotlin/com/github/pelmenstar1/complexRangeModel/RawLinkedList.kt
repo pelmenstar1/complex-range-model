@@ -16,6 +16,9 @@ class RawLinkedList<T> : MutableCollection<T> {
     val tail: Node<T>?
         get() = _tail
 
+    val firstValue: T
+        get() = _head?.value ?: throw IllegalStateException("List is empty")
+
     override val size: Int
         get() = _size
 
@@ -254,6 +257,11 @@ class RawLinkedList<T> : MutableCollection<T> {
         return RawLinkedList(newHead, newCurrent, _size)
     }
 
+    fun toArray(output: Array<in T>) {
+        var index = 0
+        forEach { output[index++] = it }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other !is RawLinkedList<*>) {
             return false
@@ -436,4 +444,12 @@ class RawLinkedList<T> : MutableCollection<T> {
             return TwoWayIteratorImpl(startNode, endNode, subSize)
         }
     }
+}
+
+@Suppress("UNCHECKED_CAST")
+inline fun<reified T> RawLinkedList<T>.toArray(): Array<T> {
+    val arr = arrayOfNulls<T>(size)
+    toArray(arr)
+
+    return arr as Array<T>
 }

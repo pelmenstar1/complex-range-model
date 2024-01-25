@@ -2,6 +2,9 @@ package com.github.pelmenstar1.complexRangeModel.transitions
 
 import com.github.pelmenstar1.complexRangeModel.*
 
+private typealias FragmentIterator<T> = TwoWayIterator<RangeFragment<T>>
+private typealias FragmentLinkedList<T> = RawLinkedList<RangeFragment<T>>
+
 class ComplexRangeTransitionManager<T>(
     private val fragmentFactory: RangeFragmentFactory<T>,
     private val proxPredicate: FragmentProximityPredicate<T> = FragmentProximityPredicate.uniting()
@@ -26,20 +29,24 @@ class ComplexRangeTransitionManager<T>(
                 break
             }
 
-            originIter.mark()
-            destIter.mark()
-
             val originFrag = originIter.next()
             val destFrag = destIter.next()
 
             if (originFrag != destFrag) {
                 if (proxPredicate.test(originFrag, destFrag)) {
-                    consumeElementsForTransformGroup(originFrag, destFrag, originIter, destIter)
+                    val originGroupFrags = RawLinkedList<RangeFragment<T>>()
+                    val destGroupsFrags = RawLinkedList<RangeFragment<T>>()
 
-                    val originGroupIter = originIter.subIterator()
-                    val destGroupIter = destIter.subIterator()
+                    originGroupFrags.add(originFrag)
+                    destGroupsFrags.add(destFrag)
 
-                    groups.add(createTransformGroup(originGroupIter, destGroupIter))
+                    consumeElementsForTransformGroup(
+                        originFrag, destFrag,
+                        originIter, destIter,
+                        originGroupFrags, destGroupsFrags
+                    )
+
+                    groups.add(createTransformGroup(originGroupFrags, destGroupsFrags))
                 } else {
                     groups.add(TransitionGroup.create(TransitionOperation.Remove(originFrag)))
                     groups.add(TransitionGroup.create(TransitionOperation.Insert(destFrag)))
@@ -50,16 +57,16 @@ class ComplexRangeTransitionManager<T>(
         return ComplexRangeTransition(groups)
     }
 
-    private fun addInsertAllTransition(iter: TwoWayIterator<RangeFragment<T>>, groups: ArrayList<TransitionGroup<T>>) {
+    private fun addInsertAllTransition(iter: FragmentIterator<T>, groups: ArrayList<TransitionGroup<T>>) {
         addOperationAllTransition(iter, groups) { TransitionOperation.Insert(it) }
     }
 
-    private fun addRemoveAllTransition(iter: TwoWayIterator<RangeFragment<T>>, groups: ArrayList<TransitionGroup<T>>) {
+    private fun addRemoveAllTransition(iter: FragmentIterator<T>, groups: ArrayList<TransitionGroup<T>>) {
         addOperationAllTransition(iter, groups) { TransitionOperation.Remove(it) }
     }
 
     private inline fun addOperationAllTransition(
-        iter: TwoWayIterator<RangeFragment<T>>,
+        iter: FragmentIterator<T>,
         groups: ArrayList<TransitionGroup<T>>,
         createOp: (RangeFragment<T>) -> TransitionOperation<T>
     ) {
@@ -74,24 +81,26 @@ class ComplexRangeTransitionManager<T>(
     private fun consumeElementsForTransformGroup(
         initialOriginAnchor: RangeFragment<T>,
         initialDestAnchor: RangeFragment<T>,
-        originIter: TwoWayIterator<RangeFragment<T>>,
-        destIter: TwoWayIterator<RangeFragment<T>>
+        originIter: FragmentIterator<T>,
+        destIter: FragmentIterator<T>,
+        originGroupFrags: FragmentLinkedList<T>,
+        destGroupFrags: FragmentLinkedList<T>
     ) {
         var originAnchor: RangeFragment<T> = initialOriginAnchor
         var destAnchor: RangeFragment<T> = initialDestAnchor
 
         while (true) {
-            val lastDestFrag = consumeUnitingElements(originAnchor, destIter)
+            val lastDestFrag = consumeLaneForTransform(originAnchor, destIter, destGroupFrags)
             if (lastDestFrag != null) {
                 destAnchor = lastDestFrag
             }
 
-            val lastOriginFrag = consumeUnitingElements(destAnchor, originIter)
+            val lastOriginFrag = consumeLaneForTransform(destAnchor, originIter, originGroupFrags)
             if (lastOriginFrag != null) {
                 originAnchor = lastOriginFrag
             }
 
-            if (!proxPredicate.test(originAnchor, destAnchor)) {
+            if (originAnchor == destAnchor || !proxPredicate.test(originAnchor, destAnchor)) {
                 break
             }
 
@@ -101,74 +110,77 @@ class ComplexRangeTransitionManager<T>(
         }
     }
 
-    private fun consumeUnitingElements(
+    private fun consumeLaneForTransform(
         anchorFrag: RangeFragment<T>,
-        iter: TwoWayIterator<RangeFragment<T>>
+        iter: FragmentIterator<T>,
+        output: FragmentLinkedList<T>
     ): RangeFragment<T>? {
-        var lastIterated: RangeFragment<T>? = null
+        var frag: RangeFragment<T>? = null
 
         while (iter.hasNext()) {
-            lastIterated = iter.next()
+            frag = iter.next()
 
-            if (!proxPredicate.test(lastIterated, anchorFrag)) {
+            if (frag == anchorFrag || !proxPredicate.test(frag, anchorFrag)) {
                 iter.previous()
-                break
+                return frag
             }
+
+            output.add(frag)
         }
 
-        return lastIterated
+        return frag
     }
 
     private fun createTransformGroup(
-        originIter: TwoWayIterator<RangeFragment<T>>,
-        destIter: TwoWayIterator<RangeFragment<T>>,
+        originFrags: FragmentLinkedList<T>,
+        destFrags: FragmentLinkedList<T>
     ): TransitionGroup<T> {
         val ops = ArrayList<TransitionOperation<T>>(3)
 
-        val originSize = originIter.size
-        val destSize = destIter.size
+        val originSize = originFrags.size
+        val destSize = destFrags.size
 
         if (originSize == 1) {
-            val originFrag = originIter.next()
+            val originFrag = originFrags.firstValue
 
             if (destSize == 1) {
                 // Ops:
                 // - Transform
 
-                val destFrag = destIter.next()
+                val destFrag = destFrags.firstValue
                 ops.add(TransitionOperation.Transform(originFrag, destFrag))
             } else {
                 // Ops:
                 // - Transform
                 // - Split
 
-                val destFrags = destIter.toTypedArray(destSize)
+                val destFragsArray = destFrags.toArray()
 
-                val minFrag = destFrags[0]
-                val maxFrag = destFrags[destSize - 1]
+                val minFrag = destFragsArray[0]
+                val maxFrag = destFragsArray[destSize - 1]
                 val destTransformFrag = fragmentFactory.create(minFrag.start, maxFrag.endInclusive)
 
                 if (originFrag != destTransformFrag) {
                     ops.add(TransitionOperation.Transform(originFrag, destTransformFrag))
                 }
 
-                ops.add(TransitionOperation.Split(destTransformFrag, destFrags))
+                ops.add(TransitionOperation.Split(destTransformFrag, destFragsArray))
             }
         } else {
             // originSize > 1
-            val originFrags = originIter.toTypedArray(originSize)
+            val originFragsArray = originFrags.toTypedArray()
 
-            val minOriginFrag = originFrags[0]
-            val maxOriginFrag = originFrags[originSize - 1]
+            val minOriginFrag = originFragsArray[0]
+            val maxOriginFrag = originFragsArray[originSize - 1]
             val originTransformFrag = fragmentFactory.create(minOriginFrag.start, maxOriginFrag.endInclusive)
 
             if (destSize == 1) {
-                val destFrag = destIter.next()
+                val destFrag = destFrags.firstValue
 
                 // Ops:
                 // - Join
                 // - Transform? (if joined fragment is not destination fragment)
-                ops.add(TransitionOperation.Join(originFrags, originTransformFrag))
+                ops.add(TransitionOperation.Join(originFragsArray, originTransformFrag))
 
                 if (destFrag != originTransformFrag) {
                     ops.add(TransitionOperation.Transform(originTransformFrag, destFrag))
@@ -179,20 +191,20 @@ class ComplexRangeTransitionManager<T>(
                 // - Transform
                 // - Split
 
-                val destFrags = destIter.toTypedArray(destSize)
+                val destFragsArray = destFrags.toTypedArray()
 
-                val minDestFrag = destFrags[0]
-                val maxDestFrag = destFrags[destSize - 1]
+                val minDestFrag = destFragsArray[0]
+                val maxDestFrag = destFragsArray[destSize - 1]
 
                 val destTransformFrag = fragmentFactory.create(minDestFrag.start, maxDestFrag.endInclusive)
 
-                ops.add(TransitionOperation.Join(originFrags, originTransformFrag))
+                ops.add(TransitionOperation.Join(originFragsArray, originTransformFrag))
 
                 if (originTransformFrag != destTransformFrag) {
                     ops.add(TransitionOperation.Transform(originTransformFrag, destTransformFrag))
                 }
 
-                ops.add(TransitionOperation.Split(destTransformFrag, destFrags))
+                ops.add(TransitionOperation.Split(destTransformFrag, destFragsArray))
             }
         }
 
