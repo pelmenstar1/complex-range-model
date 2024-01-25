@@ -1,13 +1,15 @@
 package com.github.pelmenstar1.complexRangeModel
 
-import com.github.pelmenstar1.complexRangeModel.bits.PackedIntRange
+abstract class RangeFragment<T>(val start: T, val endInclusive: T) {
+    abstract val support: FragmentElementSupport<T>
 
-abstract class RangeFragment<T : Comparable<T>>(val start: T, val endInclusive: T) {
     val endExclusive: T
-        get() = getNextValue(endInclusive)
+        get() = support.nextValue(endInclusive)
 
     init {
-        require(start <= endInclusive) { "Invalid range parameters" }
+        require(compare(start, endInclusive) <= 0) {
+            "Invalid range parameters"
+        }
     }
 
     fun withStart(newStart: T): RangeFragment<T> {
@@ -19,7 +21,7 @@ abstract class RangeFragment<T : Comparable<T>>(val start: T, val endInclusive: 
     }
 
     fun withEndExclusive(newEnd: T): RangeFragment<T> {
-        return withEnd(getPreviousValue(newEnd))
+        return withEnd(support.previousValue(newEnd))
     }
 
     override fun equals(other: Any?): Boolean {
@@ -35,23 +37,23 @@ abstract class RangeFragment<T : Comparable<T>>(val start: T, val endInclusive: 
     }
 
     operator fun contains(value: T): Boolean {
-        return value in start..endInclusive
+        return compare(value, start) >= 0 && compare(value, endInclusive) <= 0
     }
 
     fun containsExclusive(other: RangeFragment<T>): Boolean {
-        return other.start > start && other.endInclusive < endInclusive
+        return compare(other.start, start) > 0 && compare(other.endInclusive, endInclusive) < 0
     }
 
     fun containsCompletely(other: RangeFragment<T>): Boolean {
-        return other.start >= start && other.endInclusive <= endInclusive
+        return compare(other.start, start) >= 0 && compare(other.endInclusive, endInclusive) <= 0
     }
 
     fun leftContains(other: RangeFragment<T>): Boolean {
-        return other.endInclusive in this && other.start <= start
+        return other.endInclusive in this && compare(other.start, start) <= 0
     }
 
     fun overlapsWith(other: RangeFragment<T>): Boolean {
-        return start <= other.endInclusive && other.start <= endInclusive
+        return compare(start, other.endInclusive) <= 0 && compare(other.start, endInclusive) <= 0
     }
 
     fun canUniteWith(other: RangeFragment<T>): Boolean {
@@ -59,8 +61,8 @@ abstract class RangeFragment<T : Comparable<T>>(val start: T, val endInclusive: 
         // 1. Overlap
         // 2. Next to each other, e.g [1; 2] and [3; 4] can be united to [1; 4]
         return overlapsWith(other) ||
-                isNextToOther(endInclusive, other.start) ||
-                isNextToOther(other.endInclusive, start)
+                support.isNextToOther(endInclusive, other.start) ||
+                support.isNextToOther(other.endInclusive, start)
     }
 
     fun uniteWith(other: RangeFragment<T>): RangeFragment<T>? {
@@ -71,10 +73,22 @@ abstract class RangeFragment<T : Comparable<T>>(val start: T, val endInclusive: 
         return null
     }
 
-    protected abstract fun isNextToOther(a: T, b: T): Boolean
+    private fun minOf(a: T, b: T): T = if(compare(a, b) <= 0) a else b
+    private fun maxOf(a: T, b: T): T = if(compare(a, b) >= 0) a else b
+
+    private fun compare(a: T, b: T): Int = support.compare(a, b)
+
     protected abstract fun createSelf(start: T, endInclusive: T): RangeFragment<T>
-    protected abstract fun getPreviousValue(value: T): T
-    protected abstract fun getNextValue(value: T): T
+}
+
+fun interface RangeFragmentFactory<T> {
+    fun create(start: T, endInclusive: T): RangeFragment<T>
+}
+
+object IntRangeFragmentFactory : RangeFragmentFactory<Int> {
+    override fun create(start: Int, endInclusive: Int): RangeFragment<Int> {
+        return IntRangeFragment(start, endInclusive)
+    }
 }
 
 private class IntRangeFragment(
@@ -82,16 +96,12 @@ private class IntRangeFragment(
     endInclusive: Int,
     @Suppress("UNUSED_PARAMETER") marker: Boolean
 ) : RangeFragment<Int>(start, endInclusive) {
-    override fun isNextToOther(a: Int, b: Int): Boolean {
-        return a + 1 == b
-    }
+    override val support: FragmentElementSupport<Int>
+        get() = IntFragmentElementSupport
 
     override fun createSelf(start: Int, endInclusive: Int): RangeFragment<Int> {
         return IntRangeFragment(start, endInclusive)
     }
-
-    override fun getPreviousValue(value: Int): Int = value - 1
-    override fun getNextValue(value: Int): Int = value + 1
 }
 
 fun IntRangeFragment(start: Int, endInclusive: Int): RangeFragment<Int> {
@@ -100,8 +110,4 @@ fun IntRangeFragment(start: Int, endInclusive: Int): RangeFragment<Int> {
 
 fun IntRangeFragment(range: IntRange): RangeFragment<Int> {
     return IntRangeFragment(range.first, range.last)
-}
-
-fun IntRangeFragment(range: PackedIntRange): RangeFragment<Int> {
-    return IntRangeFragment(range.start, range.endInclusive)
 }

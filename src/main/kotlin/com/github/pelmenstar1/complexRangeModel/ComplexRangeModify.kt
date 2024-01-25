@@ -1,6 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel
 
-interface ComplexRangeModify<T : Comparable<T>> {
+interface ComplexRangeModify<T> {
     fun set(fragment: RangeFragment<T>)
     fun unset(fragment: RangeFragment<T>)
 }

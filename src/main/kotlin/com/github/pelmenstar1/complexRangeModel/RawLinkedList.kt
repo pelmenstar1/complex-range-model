@@ -1,28 +1,29 @@
-package com.github.pelmenstar1.complexRangeModel.generic
+package com.github.pelmenstar1.complexRangeModel
 
-import com.github.pelmenstar1.complexRangeModel.RangeFragment
-
-class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragment<T>> {
-    class Node<T : Comparable<T>>(var value: RangeFragment<T>) {
+class RawLinkedList<T> : MutableCollection<T> {
+    class Node<T>(var value: T) {
         var previous: Node<T>? = null
         var next: Node<T>? = null
     }
 
-    var head: Node<T>? = null
-    var tail: Node<T>? = null
+    private var _size = 0
+    private var _head: Node<T>? = null
+    private var _tail: Node<T>? = null
+
+    val head: Node<T>?
+        get() = _head
+
+    val tail: Node<T>?
+        get() = _tail
 
     override val size: Int
-        get() {
-            var result = 0
-            forEach { _ -> result++ }
-
-            return result
-        }
+        get() = _size
 
     constructor()
-    constructor(head: Node<T>, tail: Node<T>) {
-        this.head = head
-        this.tail = tail
+    private constructor(head: Node<T>, tail: Node<T>, size: Int) {
+        _head = head
+        _tail = tail
+        _size = size
     }
 
     override fun isEmpty(): Boolean {
@@ -41,7 +42,7 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
         forEachNodeStartingWith(head, action)
     }
 
-    inline fun forEach(action: (value: RangeFragment<T>) -> Unit) {
+    inline fun forEach(action: (value: T) -> Unit) {
         forEachNode { action(it.value) }
     }
 
@@ -54,10 +55,12 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
     }
 
     override fun clear() {
-        head = null
+        _head = null
+        _tail = null
+        _size = 0
     }
 
-    operator fun get(index: Int): RangeFragment<T> {
+    operator fun get(index: Int): T {
         return getNode(index).value
     }
 
@@ -77,11 +80,11 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
         throw IndexOutOfBoundsException()
     }
 
-    override fun contains(element: RangeFragment<T>): Boolean {
+    override fun contains(element: T): Boolean {
         return findFirstNode(element) != null
     }
 
-    inline fun findFirstNode(predicate: (value: RangeFragment<T>) -> Boolean): Node<T>? {
+    inline fun findFirstNode(predicate: (value: T) -> Boolean): Node<T>? {
         forEachNode { node ->
             if (predicate(node.value)) {
                 return node
@@ -91,7 +94,7 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
         return null
     }
 
-    inline fun findLastNode(predicate: (value: RangeFragment<T>) -> Boolean): Node<T>? {
+    inline fun findLastNode(predicate: (value: T) -> Boolean): Node<T>? {
         forEachNodeReversed { node ->
             if (predicate(node.value)) {
                 return node
@@ -101,52 +104,55 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
         return null
     }
 
-    fun findFirstNode(value: RangeFragment<T>): Node<T>? {
+    fun findFirstNode(value: T): Node<T>? {
         return findFirstNode { it == value }
     }
 
-    override fun containsAll(elements: Collection<RangeFragment<T>>): Boolean {
+    override fun containsAll(elements: Collection<T>): Boolean {
         return elements.all { contains(it) }
     }
 
-    override fun addAll(elements: Collection<RangeFragment<T>>): Boolean {
+    override fun addAll(elements: Collection<T>): Boolean {
         elements.forEach { add(it) }
 
         return elements.isNotEmpty()
     }
 
-    override fun add(element: RangeFragment<T>): Boolean {
+    override fun add(element: T): Boolean {
         val newNode = Node(element)
         val t = tail
 
         if (t == null) {
-            head = newNode
-            tail = newNode
+            _head = newNode
+            _tail = newNode
         } else {
             newNode.previous = t
             t.next = newNode
 
-            tail = newNode
+            _tail = newNode
         }
+
+        _size++
 
         return true
     }
 
-    fun insertBeforeHead(element: RangeFragment<T>) {
+    fun insertBeforeHead(element: T) {
         val node = Node(element)
         val h = head
 
         if (h == null) {
-            tail = node
+            _tail = node
         } else {
             node.next = h
             h.previous = node
         }
 
-        head = node
+        _head = node
+        _size++
     }
 
-    fun insertAfterNode(element: RangeFragment<T>, node: Node<T>) {
+    fun insertAfterNode(element: T, node: Node<T>) {
         val nextNode = node.next
         val newNode = Node(element)
 
@@ -157,11 +163,13 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
         node.next = newNode
 
         if (node === tail) {
-            tail = newNode
+            _tail = newNode
         }
+
+        _size++
     }
 
-    override fun retainAll(elements: Collection<RangeFragment<T>>): Boolean {
+    override fun retainAll(elements: Collection<T>): Boolean {
         var modified = false
         forEachNode {
             if (it.value !in elements) {
@@ -173,7 +181,7 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
         return modified
     }
 
-    override fun removeAll(elements: Collection<RangeFragment<T>>): Boolean {
+    override fun removeAll(elements: Collection<T>): Boolean {
         var modified = false
 
         elements.forEach {
@@ -183,7 +191,7 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
         return modified
     }
 
-    override fun remove(element: RangeFragment<T>): Boolean {
+    override fun remove(element: T): Boolean {
         return findFirstNode(element)?.let { node ->
             removeNode(node)
             true
@@ -195,37 +203,41 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
     }
 
     fun removeBetween(startNode: Node<T>, endNode: Node<T>) {
+        _size -= countBetweenNodes(startNode, endNode)
+
         val startNodePrev = startNode.previous
         val endNodeNext = endNode.next
 
         if (startNodePrev == null) {
-            head = endNode.next
+            _head = endNode.next
         } else {
             startNodePrev.next = endNode.next
         }
 
         if (endNodeNext == null) {
-            tail = startNodePrev
+            _tail = startNodePrev
         } else {
             endNodeNext.previous = startNodePrev
         }
     }
 
-    fun replaceBetweenWith(value: RangeFragment<T>, startNode: Node<T>, endNode: Node<T>) {
+    fun replaceBetweenWith(value: T, startNode: Node<T>, endNode: Node<T>) {
+        _size -= countBetweenNodes(startNode, endNode) - 1
+
         val endNodeNext = endNode.next
 
         startNode.value = value
         startNode.next = endNodeNext
 
         if (endNodeNext == null) {
-            tail = startNode
+            _tail = startNode
         } else {
             endNodeNext.previous = startNode
         }
     }
 
-    fun copyOf(): RangeFragmentLinkedList<T> {
-        val currentHead = head ?: return RangeFragmentLinkedList()
+    fun copyOf(): RawLinkedList<T> {
+        val currentHead = head ?: return RawLinkedList()
 
         val newHead = Node(currentHead.value)
         var newCurrent = newHead
@@ -239,11 +251,11 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
             newCurrent = newNode
         }
 
-        return RangeFragmentLinkedList(newHead, newCurrent)
+        return RawLinkedList(newHead, newCurrent, _size)
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is RangeFragmentLinkedList<*>) {
+        if (other !is RawLinkedList<*>) {
             return false
         }
 
@@ -292,13 +304,37 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
         return sb.toString()
     }
 
-    override fun iterator(): MutableIterator<RangeFragment<T>> {
+    override fun iterator(): MutableIterator<T> {
         return IteratorImpl(this)
     }
 
-    private class IteratorImpl<T : Comparable<T>>(
-        private val list: RangeFragmentLinkedList<T>
-    ) : MutableIterator<RangeFragment<T>> {
+    fun twoWayIterator(): TwoWayIterator<T> {
+        val h = head
+
+        return if (h == null) TwoWayIterator.empty() else TwoWayIteratorImpl(h, tail!!, _size)
+    }
+
+    companion object {
+        private fun<T> countBetweenNodes(start: Node<T>, end: Node<T>): Int {
+            var count = 0
+            var current: Node<T>? = start
+
+            while (current != null) {
+                if (current == end) {
+                    return count + 1
+                }
+
+                count++
+                current = current.next
+            }
+
+            throw IllegalArgumentException("Start and end nodes are not connected")
+        }
+    }
+
+    private class IteratorImpl<T>(
+        private val list: RawLinkedList<T>
+    ) : MutableIterator<T> {
         private var previousNode: Node<T>? = null
         private var currentNode: Node<T>? = list.head
 
@@ -306,7 +342,7 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
             return currentNode != null
         }
 
-        override fun next(): RangeFragment<T> {
+        override fun next(): T {
             val curNode = currentNode ?: throw IllegalStateException("Iterator is already empty")
 
             previousNode = curNode
@@ -317,6 +353,96 @@ class RangeFragmentLinkedList<T : Comparable<T>> : MutableCollection<RangeFragme
 
         override fun remove() {
             previousNode?.also { list.removeNode(it) }
+        }
+    }
+
+    private class TwoWayIteratorImpl<T>(
+        startNode: Node<T>,
+        private val endNode: Node<T>,
+        override val size: Int
+    ) : TwoWayIterator<T> {
+        private var lastReturnedNode: Node<T>? = null
+        private var nextNode: Node<T>? = startNode
+        private var nextIndex = 0
+
+        private var markedNode: Node<T>? = null
+        private var markedNodeIndex = -1
+
+        override fun peek(): T {
+            return lastReturnedNode?.value ?: throw NoSuchElementException()
+        }
+
+        override fun hasNext(): Boolean {
+            return nextNode !== endNode.next
+        }
+
+        override fun hasPrevious(): Boolean {
+            return nextIndex > 0
+        }
+
+        override fun next(): T {
+            val nn = nextNode
+            if (nn == null || nn === endNode.next) {
+                throw NoSuchElementException()
+            }
+
+            lastReturnedNode = nn
+            nextNode = nn.next
+            nextIndex++
+
+            return nn.value
+        }
+
+        override fun previous(): T {
+            val nn = nextNode
+            val l = if (nn == null) endNode else nn.previous
+
+            if (l == null) {
+                throw NoSuchElementException()
+            }
+
+            nextNode = l
+            lastReturnedNode = l
+            nextIndex--
+
+            return l.value
+        }
+
+        override fun nextIndex(): Int = nextIndex
+        override fun previousIndex(): Int = nextIndex - 1
+
+        override fun mark() {
+            markedNode = nextNode
+            markedNodeIndex = nextIndex
+        }
+
+        override fun markPrevious() {
+            markedNode = nextNode?.previous
+            markedNodeIndex = nextIndex - 1
+        }
+
+        override fun fillArray(array: Array<in T>) {
+            var currentNode = nextNode
+
+            for (i in array.indices) {
+                if (currentNode == null) {
+                    throw NoSuchElementException()
+                }
+
+                array[i] = currentNode.value
+                currentNode = currentNode.next
+            }
+
+            lastReturnedNode = currentNode
+            nextNode = currentNode
+        }
+
+        override fun subIterator(): TwoWayIterator<T> {
+            val startNode = markedNode ?: throw IllegalStateException("No element is marked")
+            val endNode = lastReturnedNode ?: endNode
+            val subSize = nextIndex - markedNodeIndex
+
+            return TwoWayIteratorImpl(startNode, endNode, subSize)
         }
     }
 }

@@ -13,14 +13,15 @@ value class PackedIntRange private constructor(private val bits: Long) {
         get() = (bits shr 32).toInt()
 
     constructor(start: Int, end: Int) : this(packInts(start, end))
-    constructor(range: IntRange): this(range.first, range.last)
 
     operator fun component1(): Int = start
     operator fun component2(): Int = endInclusive
 
-    fun toIntRange(): IntRange = start..endInclusive
-
     override fun toString(): String {
         return "[$start, $endInclusive]"
+    }
+
+    companion object {
+        val Empty = PackedIntRange(0, -1)
     }
 }

@@ -2,8 +2,8 @@ package com.github.pelmenstar1.complexRangeModel.generic
 
 import com.github.pelmenstar1.complexRangeModel.*
 
-class GenericComplexRange<T : Comparable<T>> internal constructor(
-    private val fragments: RangeFragmentLinkedList<T>
+class GenericComplexRange<T> internal constructor(
+    private val fragments: RawLinkedList<RangeFragment<T>>
 ) : ComplexRange<T> {
     override val size: Int
         get() = fragments.size
@@ -63,12 +63,16 @@ class GenericComplexRange<T : Comparable<T>> internal constructor(
         return fragments.iterator()
     }
 
+    override fun twoWayIterator(): TwoWayIterator<RangeFragment<T>> {
+        return fragments.twoWayIterator()
+    }
+
     companion object {
-        fun <T : Comparable<T>> empty() = GenericComplexRange<T>(RangeFragmentLinkedList())
+        fun <T> empty() = GenericComplexRange<T>(RawLinkedList())
     }
 }
 
-class GenericComplexRangeBuilder<T : Comparable<T>> : GenericComplexRangeBaseBuilder<T>(), ComplexRangeBuilder<T> {
+class GenericComplexRangeBuilder<T> : GenericComplexRangeBaseBuilder<T>(), ComplexRangeBuilder<T> {
     override fun fragment(value: RangeFragment<T>) {
         includeFragment(value)
     }
@@ -78,8 +82,8 @@ class GenericComplexRangeBuilder<T : Comparable<T>> : GenericComplexRangeBaseBui
     }
 }
 
-class GenericComplexRangeModify<T : Comparable<T>>(
-    fragments: RangeFragmentLinkedList<T>
+class GenericComplexRangeModify<T>(
+    fragments: RawLinkedList<RangeFragment<T>>
 ) : GenericComplexRangeBaseBuilder<T>(fragments), ComplexRangeModify<T> {
     override fun set(fragment: RangeFragment<T>) {
         includeFragment(fragment)

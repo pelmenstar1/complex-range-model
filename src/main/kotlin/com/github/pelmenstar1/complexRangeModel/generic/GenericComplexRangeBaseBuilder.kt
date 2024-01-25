@@ -1,15 +1,16 @@
 package com.github.pelmenstar1.complexRangeModel.generic
 
 import com.github.pelmenstar1.complexRangeModel.RangeFragment
+import com.github.pelmenstar1.complexRangeModel.RawLinkedList
 
-abstract class GenericComplexRangeBaseBuilder<T : Comparable<T>> {
-    protected val fragments: RangeFragmentLinkedList<T>
+abstract class GenericComplexRangeBaseBuilder<T> {
+    protected val fragments: RawLinkedList<RangeFragment<T>>
 
     protected constructor() {
-        fragments = RangeFragmentLinkedList()
+        fragments = RawLinkedList()
     }
 
-    protected constructor(fragments: RangeFragmentLinkedList<T>) {
+    protected constructor(fragments: RawLinkedList<RangeFragment<T>>) {
         this.fragments = fragments
     }
 
@@ -41,7 +42,7 @@ abstract class GenericComplexRangeBaseBuilder<T : Comparable<T>> {
 
     private fun includeFragmentWithUniting(
         fragmentUnitedWithStart: RangeFragment<T>,
-        startNode: RangeFragmentLinkedList.Node<T>
+        startNode: RawLinkedList.Node<RangeFragment<T>>
     ) {
         var totalUnitedFragment = fragmentUnitedWithStart
 
@@ -77,10 +78,12 @@ abstract class GenericComplexRangeBaseBuilder<T : Comparable<T>> {
 
     // Tries to find the node after which the fragment should be inserted. It returns null, when
     // the fragment should be inserted before the head.
-    private fun findNewFragmentInsertAfterNode(fragment: RangeFragment<T>): RangeFragmentLinkedList.Node<T>? {
+    private fun findNewFragmentInsertAfterNode(fragment: RangeFragment<T>): RawLinkedList.Node<RangeFragment<T>>? {
+        val support = fragment.support
+
         // It assumes that given fragment doesn't overlap with any of current fragments
         fragments.forEachNode { node ->
-            if (fragment.start < node.value.start) {
+            if (support.compare(fragment.start, node.value.start) < 0) {
                 return node.previous
             }
         }
@@ -105,7 +108,7 @@ abstract class GenericComplexRangeBaseBuilder<T : Comparable<T>> {
 
     private fun excludeFragmentWithOneAffected(
         excludeFragment: RangeFragment<T>,
-        affectedNode: RangeFragmentLinkedList.Node<T>
+        affectedNode: RawLinkedList.Node<RangeFragment<T>>
     ) {
         val affectedFragment = affectedNode.value
 
@@ -136,16 +139,18 @@ abstract class GenericComplexRangeBaseBuilder<T : Comparable<T>> {
 
     private fun excludeFragmentWithRangeAffected(
         excludeFragment: RangeFragment<T>,
-        affectedStartNode: RangeFragmentLinkedList.Node<T>,
-        affectedEndNode: RangeFragmentLinkedList.Node<T>
+        affectedStartNode: RawLinkedList.Node<RangeFragment<T>>,
+        affectedEndNode: RawLinkedList.Node<RangeFragment<T>>
     ) {
+        val support = excludeFragment.support
+
         val affectedStartFrag = affectedStartNode.value
         val affectedEndFrag = affectedEndNode.value
 
-        val removalStartNode: RangeFragmentLinkedList.Node<T>?
-        val removalEndNode: RangeFragmentLinkedList.Node<T>?
+        val removalStartNode: RawLinkedList.Node<RangeFragment<T>>?
+        val removalEndNode: RawLinkedList.Node<RangeFragment<T>>?
 
-        if (excludeFragment.start <= affectedStartFrag.start) {
+        if (support.compare(excludeFragment.start, affectedStartFrag.start) <= 0) {
             // Something like:
             // affectedStartFrag:    [] [] []
             // excludeFragment:   [] [] [] [] ...
@@ -161,7 +166,7 @@ abstract class GenericComplexRangeBaseBuilder<T : Comparable<T>> {
             affectedStartNode.value = affectedStartFrag.withEndExclusive(excludeFragment.start)
         }
 
-        if (excludeFragment.endInclusive >= affectedEndFrag.endInclusive) {
+        if (support.compare(excludeFragment.endInclusive, affectedEndFrag.endInclusive) >= 0) {
             // Something like:
             // affectedEndFrag:     [] [] []
             // excludeFragment: ... [] [] [] []
@@ -178,12 +183,14 @@ abstract class GenericComplexRangeBaseBuilder<T : Comparable<T>> {
         }
 
         if (removalStartNode != null && removalEndNode != null) {
-            fragments.removeBetween(removalStartNode, removalEndNode)
+            if (support.compare(removalStartNode.value.start, removalEndNode.value.start) <= 0) {
+                fragments.removeBetween(removalStartNode, removalEndNode)
+            }
         }
     }
 
     private fun splitFragmentWithExcludingOtherFragment(
-        splitNode: RangeFragmentLinkedList.Node<T>,
+        splitNode: RawLinkedList.Node<RangeFragment<T>>,
         excludeFragment: RangeFragment<T>
     ) {
         // Range in splitNode: [] [] [] [] [] []
@@ -198,11 +205,11 @@ abstract class GenericComplexRangeBaseBuilder<T : Comparable<T>> {
         fragments.insertAfterNode(splitFragment.withStart(excludeFragment.endExclusive), splitNode)
     }
 
-    private fun findFirstOverlapFragmentNode(fragment: RangeFragment<T>): RangeFragmentLinkedList.Node<T>? {
+    private fun findFirstOverlapFragmentNode(fragment: RangeFragment<T>): RawLinkedList.Node<RangeFragment<T>>? {
         return fragments.findFirstNode { fragment.overlapsWith(it) }
     }
 
-    private fun findLastOverlapFragmentNode(fragment: RangeFragment<T>): RangeFragmentLinkedList.Node<T>? {
+    private fun findLastOverlapFragmentNode(fragment: RangeFragment<T>): RawLinkedList.Node<RangeFragment<T>>? {
         return fragments.findLastNode { fragment.overlapsWith(it) }
     }
 }

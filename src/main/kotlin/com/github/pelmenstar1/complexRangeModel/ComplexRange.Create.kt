@@ -3,7 +3,7 @@ package com.github.pelmenstar1.complexRangeModel
 import com.github.pelmenstar1.complexRangeModel.bits.BitArrayComplexRangeBuilder
 import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRangeBuilder
 
-inline fun <T : Comparable<T>> ComplexRange(block: ComplexRangeBuilder<T>.() -> Unit): ComplexRange<T> {
+inline fun <T> ComplexRange(block: ComplexRangeBuilder<T>.() -> Unit): ComplexRange<T> {
     return GenericComplexRangeBuilder<T>().also(block).build()
 }
 

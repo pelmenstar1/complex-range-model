@@ -5,10 +5,10 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 abstract class BaseComplexRangeTests {
-    abstract fun createRange(block: ComplexRangeBuilder<Int>.() -> Unit): ComplexRange<Int>
+    abstract fun createComplexRange(block: ComplexRangeBuilder<Int>.() -> Unit): ComplexRange<Int>
 
-    private fun createRange(ranges: Array<IntRange>): ComplexRange<Int> {
-        return createRange {
+    private fun createComplexRange(ranges: Array<IntRange>): ComplexRange<Int> {
+        return createComplexRange {
             ranges.forEach { fragment(it) }
         }
     }
@@ -16,7 +16,7 @@ abstract class BaseComplexRangeTests {
     @Test
     fun toStringTest() {
         fun testCase(fragmentRanges: Array<IntRange>, expectedResult: String) {
-            val range = createRange(fragmentRanges)
+            val range = createComplexRange(fragmentRanges)
 
             val actualResult = range.toString()
             assertEquals(expectedResult, actualResult)
@@ -29,7 +29,7 @@ abstract class BaseComplexRangeTests {
 
     @Test
     fun modifySetTest() {
-        val range = createRange {
+        val range = createComplexRange {
             fragment(0, 2)
         }
 
@@ -49,7 +49,7 @@ abstract class BaseComplexRangeTests {
     @Test
     fun modifyUnsetTest() {
         fun testCase(initialRanges: Array<IntRange>, unsetRange: IntRange, expectedRanges: Array<IntRange>) {
-            val initial = createRange(initialRanges)
+            val initial = createComplexRange(initialRanges)
             val rangeAfterUnset = initial.modify {
                 unset(unsetRange)
             }
@@ -149,5 +149,28 @@ abstract class BaseComplexRangeTests {
             unsetRange = 1..9,
             expectedRanges = arrayOf(0..0, 10..10)
         )
+    }
+
+    @Test
+    fun iteratorTest() {
+        fun testCase(ranges: Array<IntRange>) {
+            val complexRange = createComplexRange(ranges)
+            val iterator = complexRange.iterator()
+
+            var index = 0
+            while (iterator.hasNext()) {
+                val fragment = iterator.next()
+                val expectedFrag = IntRangeFragment(ranges[index++])
+
+                assertEquals(fragment, expectedFrag)
+            }
+
+            assertEquals(ranges.size, index)
+        }
+
+        testCase(emptyArray())
+        testCase(arrayOf(1..2))
+        testCase(arrayOf(1..2, 4..5))
+        testCase(arrayOf(1..2, 4..5, 7..9))
     }
 }

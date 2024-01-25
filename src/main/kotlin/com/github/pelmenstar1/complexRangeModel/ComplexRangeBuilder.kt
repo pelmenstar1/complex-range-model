@@ -1,6 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel
 
-interface ComplexRangeBuilder<T : Comparable<T>> {
+interface ComplexRangeBuilder<T> {
     fun fragment(value: RangeFragment<T>)
 }
 
