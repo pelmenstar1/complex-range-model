@@ -34,7 +34,7 @@ class ComplexRangeTransitionManager<T>(
 
             if (originFrag != destFrag) {
                 if (proxPredicate.test(originFrag, destFrag)) {
-                    consumeElementsForTransformGroup(originIter, destIter)
+                    consumeElementsForTransformGroup(originFrag, destFrag, originIter, destIter)
 
                     val originGroupIter = originIter.subIterator()
                     val destGroupIter = destIter.subIterator()
@@ -72,18 +72,26 @@ class ComplexRangeTransitionManager<T>(
     }
 
     private fun consumeElementsForTransformGroup(
+        initialOriginAnchor: RangeFragment<T>,
+        initialDestAnchor: RangeFragment<T>,
         originIter: TwoWayIterator<RangeFragment<T>>,
         destIter: TwoWayIterator<RangeFragment<T>>
     ) {
+        var originAnchor: RangeFragment<T> = initialOriginAnchor
+        var destAnchor: RangeFragment<T> = initialDestAnchor
+
         while (true) {
-            consumeUnitingElements(originIter.peek(), destIter)
+            val lastDestFrag = consumeUnitingElements(originAnchor, destIter)
+            if (lastDestFrag != null) {
+                destAnchor = lastDestFrag
+            }
 
-            val currentDestFrag = destIter.peek()
-            consumeUnitingElements(currentDestFrag, originIter)
+            val lastOriginFrag = consumeUnitingElements(destAnchor, originIter)
+            if (lastOriginFrag != null) {
+                originAnchor = lastOriginFrag
+            }
 
-            val currentOriginFrag = originIter.peek()
-
-            if (!proxPredicate.test(currentDestFrag, currentOriginFrag)) {
+            if (!proxPredicate.test(originAnchor, destAnchor)) {
                 break
             }
 
@@ -96,14 +104,19 @@ class ComplexRangeTransitionManager<T>(
     private fun consumeUnitingElements(
         anchorFrag: RangeFragment<T>,
         iter: TwoWayIterator<RangeFragment<T>>
-    ) {
+    ): RangeFragment<T>? {
+        var lastIterated: RangeFragment<T>? = null
+
         while (iter.hasNext()) {
-            val frag = iter.next()
-            if (!proxPredicate.test(frag, anchorFrag)) {
+            lastIterated = iter.next()
+
+            if (!proxPredicate.test(lastIterated, anchorFrag)) {
                 iter.previous()
                 break
             }
         }
+
+        return lastIterated
     }
 
     private fun createTransformGroup(

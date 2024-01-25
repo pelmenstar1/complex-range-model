@@ -368,10 +368,6 @@ class RawLinkedList<T> : MutableCollection<T> {
         private var markedNode: Node<T>? = null
         private var markedNodeIndex = -1
 
-        override fun peek(): T {
-            return lastReturnedNode?.value ?: throw NoSuchElementException()
-        }
-
         override fun hasNext(): Boolean {
             return nextNode !== endNode.next
         }
@@ -414,11 +410,6 @@ class RawLinkedList<T> : MutableCollection<T> {
         override fun mark() {
             markedNode = nextNode
             markedNodeIndex = nextIndex
-        }
-
-        override fun markPrevious() {
-            markedNode = nextNode?.previous
-            markedNodeIndex = nextIndex - 1
         }
 
         override fun fillArray(array: Array<in T>) {

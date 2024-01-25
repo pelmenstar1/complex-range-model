@@ -3,9 +3,7 @@ package com.github.pelmenstar1.complexRangeModel
 interface TwoWayIterator<T> : ListIterator<T> {
     val size: Int
 
-    fun peek(): T
     fun mark()
-
     fun subIterator(): TwoWayIterator<T>
 
     fun fillArray(array: Array<in T>) {
@@ -35,7 +33,6 @@ private object EmptyTwoWayIterator : TwoWayIterator<Nothing> {
     override fun hasNext(): Boolean = false
     override fun hasPrevious(): Boolean = false
 
-    override fun peek(): Nothing = throwEmptyIterator()
     override fun next(): Nothing = throwEmptyIterator()
     override fun previous(): Nothing = throwEmptyIterator()
 

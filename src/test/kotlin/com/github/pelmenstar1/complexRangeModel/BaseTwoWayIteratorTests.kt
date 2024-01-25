@@ -22,10 +22,8 @@ abstract class BaseTwoWayIteratorTests<T> {
             assertEquals(index, nextIndex, "next index")
 
             val iterValue = iter.next()
-            val peekValue = iter.peek()
             val expectedValue = expectedValues[index++]
 
-            assertSame(iterValue, peekValue)
             assertSame(expectedValue, iterValue, "next value")
         }
 
@@ -40,10 +38,8 @@ abstract class BaseTwoWayIteratorTests<T> {
             assertEquals(index, prevIndex, "previous index")
 
             val iterValue = iter.previous()
-            val peekValue = iter.peek()
             val expectedValue = expectedValues[index--]
 
-            assertSame(iterValue, peekValue)
             assertSame(expectedValue, iterValue, "previous value")
         }
 
