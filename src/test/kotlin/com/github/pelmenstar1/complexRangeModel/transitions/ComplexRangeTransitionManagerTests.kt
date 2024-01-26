@@ -13,7 +13,8 @@ class ComplexRangeTransitionManagerTests {
         val dest = ComplexRange.empty<Int>()
 
         val transition = createTransition(origin, dest)
-        assertTrue(transition.groups.isEmpty())
+
+        assertTrue(transition.isEmpty())
     }
 
     @Test

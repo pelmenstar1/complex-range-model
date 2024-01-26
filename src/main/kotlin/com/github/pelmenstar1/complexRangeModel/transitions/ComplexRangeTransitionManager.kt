@@ -10,7 +10,7 @@ class ComplexRangeTransitionManager<T>(
     private val proxDetector: FragmentProximityDetector<T>
 ) {
     fun createTransition(origin: ComplexRange<T>, dest: ComplexRange<T>): ComplexRangeTransition<T> {
-        val groups = ArrayList<TransitionGroup<T>>()
+        val groups = ArraySet<TransitionGroup<T>>()
         val originIter = origin.twoWayIterator()
         val destIter = dest.twoWayIterator()
 
@@ -58,20 +58,20 @@ class ComplexRangeTransitionManager<T>(
             }
         }
 
-        return ComplexRangeTransition(groups)
+        return ComplexRangeTransition.create(groups)
     }
 
-    private fun addInsertAllTransition(iter: FragmentIterator<T>, groups: ArrayList<TransitionGroup<T>>) {
+    private fun addInsertAllTransition(iter: FragmentIterator<T>, groups: ArraySet<TransitionGroup<T>>) {
         addOperationAllTransition(iter, groups) { TransitionOperation.Insert(it) }
     }
 
-    private fun addRemoveAllTransition(iter: FragmentIterator<T>, groups: ArrayList<TransitionGroup<T>>) {
+    private fun addRemoveAllTransition(iter: FragmentIterator<T>, groups: ArraySet<TransitionGroup<T>>) {
         addOperationAllTransition(iter, groups) { TransitionOperation.Remove(it) }
     }
 
     private inline fun addOperationAllTransition(
         iter: FragmentIterator<T>,
-        groups: ArrayList<TransitionGroup<T>>,
+        groups: ArraySet<TransitionGroup<T>>,
         createOp: (RangeFragment<T>) -> TransitionOperation<T>
     ) {
         while (iter.hasNext()) {

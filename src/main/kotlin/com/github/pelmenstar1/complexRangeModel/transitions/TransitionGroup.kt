@@ -34,7 +34,8 @@ private object EmptyTransitionGroup : TransitionGroup<Nothing> {
         return if (other is TransitionGroup<*>) other.isEmpty() else false
     }
 
-    override fun hashCode(): Int = 1
+    // Return 0 to make CollectionTransitionGroup's hash (when empty) and EmptyTransitionGroup's hashes equal
+    override fun hashCode(): Int = 0
 
     override fun toString(): String = "TransitionGroup()"
 }
@@ -110,7 +111,19 @@ private class CollectionTransitionGroup<T>(
     }
 
     override fun hashCode(): Int {
-        return ops.hashCode()
+        // Initial value is important:
+        // It's zero and not, for example, one, to make SingleOpTransitionGroup's and
+        // CollectionTransitionGroup's (when single and same element) equal.
+        //
+        // Re-implement the hash computation, because different implementations of ops may use
+        // different hash computation approaches. For instance, ArrayList's initial hash value is 1, which
+        // breaks contract between equals and hashCode
+        var result = 0
+        ops.forEach {
+            result = result * 31 + it.hashCode()
+        }
+
+        return result
     }
 
     override fun toString(): String {

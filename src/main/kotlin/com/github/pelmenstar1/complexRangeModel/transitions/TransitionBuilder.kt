@@ -1,7 +1,9 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
+import com.github.pelmenstar1.complexRangeModel.ArraySet
+
 class TransitionBuilder<T> {
-    private val groups = ArrayList<TransitionGroup<T>>()
+    private val groups = ArraySet<TransitionGroup<T>>()
 
     inline fun group(block: TransitionGroupBuilder<T>.() -> Unit) {
         val g = TransitionGroupBuilder<T>().also(block).build()
@@ -14,6 +16,6 @@ class TransitionBuilder<T> {
     }
 
     fun build(): ComplexRangeTransition<T> {
-        return ComplexRangeTransition(groups)
+        return ComplexRangeTransition.create(groups)
     }
 }
