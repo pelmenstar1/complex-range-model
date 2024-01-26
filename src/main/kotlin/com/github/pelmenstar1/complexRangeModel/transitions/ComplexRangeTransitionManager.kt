@@ -7,7 +7,7 @@ private typealias FragmentLinkedList<T> = RawLinkedList<RangeFragment<T>>
 
 class ComplexRangeTransitionManager<T>(
     private val fragmentFactory: RangeFragmentFactory<T>,
-    private val proxPredicate: FragmentProximityPredicate<T> = FragmentProximityPredicate.uniting()
+    private val proxDetector: FragmentProximityDetector<T>
 ) {
     fun createTransition(origin: ComplexRange<T>, dest: ComplexRange<T>): ComplexRangeTransition<T> {
         val groups = ArrayList<TransitionGroup<T>>()
@@ -33,7 +33,7 @@ class ComplexRangeTransitionManager<T>(
             val destFrag = destIter.next()
 
             if (originFrag != destFrag) {
-                if (proxPredicate.test(originFrag, destFrag)) {
+                if (originFrag.overlapsWith(destFrag)) {
                     val originGroupFrags = RawLinkedList<RangeFragment<T>>()
                     val destGroupsFrags = RawLinkedList<RangeFragment<T>>()
 
@@ -48,8 +48,12 @@ class ComplexRangeTransitionManager<T>(
 
                     groups.add(createTransformGroup(originGroupFrags, destGroupsFrags))
                 } else {
-                    groups.add(TransitionGroup.create(TransitionOperation.Remove(originFrag)))
-                    groups.add(TransitionGroup.create(TransitionOperation.Insert(destFrag)))
+                    if (proxDetector.canMove(originFrag, destFrag)) {
+                        groups.add(TransitionGroup.create(TransitionOperation.Transform(originFrag, destFrag)))
+                    } else {
+                        groups.add(TransitionGroup.create(TransitionOperation.Remove(originFrag)))
+                        groups.add(TransitionGroup.create(TransitionOperation.Insert(destFrag)))
+                    }
                 }
             }
         }
@@ -100,7 +104,7 @@ class ComplexRangeTransitionManager<T>(
                 originAnchor = lastOriginFrag
             }
 
-            if (originAnchor == destAnchor || !proxPredicate.test(originAnchor, destAnchor)) {
+            if (originAnchor == destAnchor || !originAnchor.overlapsWith(destAnchor)) {
                 break
             }
 
@@ -120,7 +124,7 @@ class ComplexRangeTransitionManager<T>(
         while (iter.hasNext()) {
             frag = iter.next()
 
-            if (frag == anchorFrag || !proxPredicate.test(frag, anchorFrag)) {
+            if (frag == anchorFrag || !frag.overlapsWith(anchorFrag)) {
                 iter.previous()
                 return frag
             }
@@ -209,5 +213,18 @@ class ComplexRangeTransitionManager<T>(
         }
 
         return TransitionGroup.create(ops)
+    }
+
+    companion object {
+        fun intNoMove(): ComplexRangeTransitionManager<Int> {
+            return ComplexRangeTransitionManager(IntRangeFragmentFactory, FragmentProximityDetector.noMove())
+        }
+
+        fun intWithMoveDistance(maxMoveDist: Int): ComplexRangeTransitionManager<Int> {
+            return ComplexRangeTransitionManager(
+                IntRangeFragmentFactory,
+                FragmentProximityDetector.withMoveDistance(IntFragmentElementSupport, maxMoveDist)
+            )
+        }
     }
 }

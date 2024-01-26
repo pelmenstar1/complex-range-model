@@ -73,6 +73,22 @@ abstract class RangeFragment<T>(val start: T, val endInclusive: T) {
         return null
     }
 
+    fun distanceTo(other: RangeFragment<T>): T {
+        val s = support
+
+        return if (canUniteWith(other)) {
+            s.zero
+        } else {
+            val startDiff = s.difference(start, other.start)
+
+            if (s.isPositive(startDiff)) {
+                startDiff
+            } else {
+                s.difference(other.endInclusive, endInclusive)
+            }
+        }
+    }
+
     private fun minOf(a: T, b: T): T = if(compare(a, b) <= 0) a else b
     private fun maxOf(a: T, b: T): T = if(compare(a, b) >= 0) a else b
 

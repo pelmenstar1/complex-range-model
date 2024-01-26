@@ -1,8 +1,7 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
-import com.github.pelmenstar1.complexRangeModel.ComplexRange
-import com.github.pelmenstar1.complexRangeModel.IntComplexRange
-import com.github.pelmenstar1.complexRangeModel.IntRangeFragmentFactory
+import com.github.pelmenstar1.complexRangeModel.*
+import kotlin.math.max
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -20,7 +19,7 @@ class ComplexRangeTransitionManagerTests {
     @Test
     fun createEmptyToNonEmptyTest() {
         val origin = ComplexRange.empty<Int>()
-        val dest = createRange(arrayOf(0..2, 4..5))
+        val dest = IntComplexRange(arrayOf(0..2, 4..5))
         val actualTransition = createTransition(origin, dest)
 
         assertGroupsEquals(actualTransition) {
@@ -36,7 +35,7 @@ class ComplexRangeTransitionManagerTests {
 
     @Test
     fun createNonEmptyToEmptyTest() {
-        val origin = createRange(arrayOf(0..2, 4..5))
+        val origin = IntComplexRange(arrayOf(0..2, 4..5))
         val dest = ComplexRange.empty<Int>()
         val actualTransition = createTransition(origin, dest)
 
@@ -54,12 +53,13 @@ class ComplexRangeTransitionManagerTests {
     private fun transitionTestHelper(
         origin: Array<IntRange>,
         dest: Array<IntRange>,
+        maxMoveDist: Int = -1,
         transitionBuild: TransitionBuilder<Int>.() -> Unit
     ) {
         val originComplexRange = IntComplexRange(origin)
         val destComplexRange = IntComplexRange(dest)
 
-        val actualTransition = createTransition(originComplexRange, destComplexRange)
+        val actualTransition = createTransition(originComplexRange, destComplexRange, maxMoveDist)
 
         assertGroupsEquals(actualTransition, transitionBuild)
     }
@@ -139,6 +139,84 @@ class ComplexRangeTransitionManagerTests {
                 split(originRange = 2..4, destRanges = arrayOf(2..2, 4..4))
             }
         }
+
+        // Remove + Insert
+
+        transitionTestHelper(
+            origin = arrayOf(1..2),
+            dest = arrayOf(3..4)
+        ) {
+            group {
+                remove(1..2)
+            }
+
+            group {
+                insert(3..4)
+            }
+        }
+
+        transitionTestHelper(
+            origin = arrayOf(1..2),
+            dest = arrayOf(3..4)
+        ) {
+            group {
+                remove(1..2)
+            }
+
+            group {
+                insert(3..4)
+            }
+        }
+
+        // Move
+
+        transitionTestHelper(
+            origin = arrayOf(1..2),
+            dest = arrayOf(3..4),
+            maxMoveDist = 0
+        ) {
+            group {
+                transform(origin = 1..2,  dest = 3..4)
+            }
+        }
+
+        transitionTestHelper(
+            origin = arrayOf(1..2),
+            dest = arrayOf(3..4),
+            maxMoveDist = 1
+        ) {
+            group {
+                transform(origin = 1..2,  dest = 3..4)
+            }
+        }
+
+        transitionTestHelper(
+            origin = arrayOf(1..2),
+            dest = arrayOf(4..5),
+            maxMoveDist = 0
+        ) {
+            group {
+                remove(1..2)
+            }
+
+            group {
+                insert(4..5)
+            }
+        }
+
+        transitionTestHelper(
+            origin = arrayOf(1..2),
+            dest = arrayOf(5..6),
+            maxMoveDist = 1
+        ) {
+            group {
+                remove(1..2)
+            }
+
+            group {
+                insert(5..6)
+            }
+        }
     }
 
     @Test
@@ -176,11 +254,11 @@ class ComplexRangeTransitionManagerTests {
         assertEquals(expected, actual)
     }
 
-    private fun createRange(ranges: Array<IntRange>): ComplexRange<Int> {
-        return IntComplexRange(ranges)
-    }
-
-    private fun createTransition(origin: ComplexRange<Int>, dest: ComplexRange<Int>): ComplexRangeTransition<Int> {
-        return ComplexRangeTransitionManager(IntRangeFragmentFactory).createTransition(origin, dest)
+    private fun createTransition(
+        origin: ComplexRange<Int>,
+        dest: ComplexRange<Int>,
+        maxMoveDist: Int = -1
+    ): ComplexRangeTransition<Int> {
+        return ComplexRangeTransitionManager.intWithMoveDistance(maxMoveDist).createTransition(origin, dest)
     }
 }
