@@ -117,8 +117,8 @@ class ArraySet<T> : MutableSet<T> {
         }
 
         if (index < oSize) {
-            System.arraycopy(hashes, index, hashes, index + 1, oSize - index);
-            System.arraycopy(elements, index, elements, index + 1, oSize - index);
+            System.arraycopy(hashes, index, hashes, index + 1, oSize - index)
+            System.arraycopy(elements, index, elements, index + 1, oSize - index)
         }
 
         elements[index] = element
@@ -156,10 +156,10 @@ class ArraySet<T> : MutableSet<T> {
         }
 
         if (index < nSize) {
-            System.arraycopy(hashes, index + 1, hashes, index, nSize - index);
-            System.arraycopy(elements, index + 1, elements, index, nSize - index);
+            System.arraycopy(hashes, index + 1, hashes, index, nSize - index)
+            System.arraycopy(elements, index + 1, elements, index, nSize - index)
         }
-        elements[nSize] = null;
+        elements[nSize] = null
 
         _size = nSize
     }

@@ -22,7 +22,6 @@ object IntFragmentElementSupport : FragmentElementSupport<Int> {
     override fun previousValue(value: Int): Int = value - 1
     override fun nextValue(value: Int): Int = value + 1
 
-
     override fun difference(a: Int, b: Int) = a - b
 
     override fun isPositive(value: Int): Boolean = value > 0

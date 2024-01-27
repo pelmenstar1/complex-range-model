@@ -34,11 +34,8 @@ class ComplexRangeTransitionManager<T>(
 
             if (originFrag != destFrag) {
                 if (originFrag.overlapsWith(destFrag)) {
-                    val originGroupFrags = RawLinkedList<RangeFragment<T>>()
-                    val destGroupsFrags = RawLinkedList<RangeFragment<T>>()
-
-                    originGroupFrags.add(originFrag)
-                    destGroupsFrags.add(destFrag)
+                    val originGroupFrags = RawLinkedList(originFrag)
+                    val destGroupsFrags = RawLinkedList(destFrag)
 
                     consumeElementsForTransformGroup(
                         originIter, destIter,

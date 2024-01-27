@@ -288,11 +288,8 @@ class ComplexRangeTransitionManagerTests {
             val originIter = createIterator(origin)
             val destIter = createIterator(dest)
 
-            val originGroupFrags = RawLinkedList<RangeFragment<Int>>()
-            val destGroupFrags = RawLinkedList<RangeFragment<Int>>()
-
-            originGroupFrags.add(IntRangeFragment(origin[0]))
-            destGroupFrags.add(IntRangeFragment(dest[0]))
+            val originGroupFrags = RawLinkedList(IntRangeFragment(origin[0]))
+            val destGroupFrags = RawLinkedList(IntRangeFragment(dest[0]))
 
             val manager = ComplexRangeTransitionManager.intNoMove()
             manager.consumeElementsForTransformGroup(originIter, destIter, originGroupFrags, destGroupFrags)

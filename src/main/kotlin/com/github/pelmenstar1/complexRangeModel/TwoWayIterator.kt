@@ -1,6 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel
 
-interface TwoWayIterator<T> : ListIterator<T> {
+interface TwoWayIterator<out T> : ListIterator<T> {
     val size: Int
 
     fun mark()
@@ -13,17 +13,8 @@ interface TwoWayIterator<T> : ListIterator<T> {
     }
 
     companion object {
-        @Suppress("UNCHECKED_CAST")
-        fun<T> empty(): TwoWayIterator<T> = EmptyTwoWayIterator as TwoWayIterator<T>
+        fun<T> empty(): TwoWayIterator<T> = EmptyTwoWayIterator
     }
-}
-
-@Suppress("UNCHECKED_CAST")
-inline fun<reified T> TwoWayIterator<T>.toTypedArray(count: Int): Array<T> {
-    val array = arrayOfNulls<T>(count)
-    fillArray(array)
-
-    return array as Array<T>
 }
 
 private object EmptyTwoWayIterator : TwoWayIterator<Nothing> {

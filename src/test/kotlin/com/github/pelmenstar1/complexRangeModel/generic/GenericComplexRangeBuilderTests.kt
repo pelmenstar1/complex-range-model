@@ -3,7 +3,6 @@ package com.github.pelmenstar1.complexRangeModel.generic
 import com.github.pelmenstar1.complexRangeModel.ComplexRange
 import com.github.pelmenstar1.complexRangeModel.IntComplexRange
 import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
-import com.github.pelmenstar1.complexRangeModel.RangeFragment
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
