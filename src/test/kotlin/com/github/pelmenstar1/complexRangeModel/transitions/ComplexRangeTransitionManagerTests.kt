@@ -258,6 +258,26 @@ class ComplexRangeTransitionManagerTests {
             return list.twoWayIterator()
         }
 
+        fun assertConsumed(
+            expectedConsumed: Int,
+            iter: TwoWayIterator<RangeFragment<Int>>,
+            input: Array<IntRange>,
+            groupFrags: RawLinkedList<RangeFragment<Int>>,
+            sourceType: String, testType: String
+        ) {
+            val resultGroupElements = groupFrags.toTypedArray()
+
+            assertEquals(expectedConsumed, resultGroupElements.size, "$sourceType consumed ($testType)")
+
+            val slicedInput = input.take(expectedConsumed).map { IntRangeFragment(it) }.toTypedArray()
+            assertContentEquals(slicedInput, resultGroupElements, "$sourceType elements ($testType)")
+
+            // +1 because first element in 'input' is already consumed
+            val consumedFromIter = iter.nextIndex() + 1
+
+            assertEquals(expectedConsumed, consumedFromIter, "$sourceType consumed from iterator ($testType)")
+        }
+
         fun testCaseBase(
             origin: Array<IntRange>, dest: Array<IntRange>,
             expectedOriginConsumed: Int, expectedDestConsumed: Int,
@@ -266,7 +286,7 @@ class ComplexRangeTransitionManagerTests {
             val testType = if (isForward) "forward" else "backward"
 
             val originIter = createIterator(origin)
-            val destIer = createIterator(dest)
+            val destIter = createIterator(dest)
 
             val originGroupFrags = RawLinkedList<RangeFragment<Int>>()
             val destGroupFrags = RawLinkedList<RangeFragment<Int>>()
@@ -275,19 +295,10 @@ class ComplexRangeTransitionManagerTests {
             destGroupFrags.add(IntRangeFragment(dest[0]))
 
             val manager = ComplexRangeTransitionManager.intNoMove()
-            manager.consumeElementsForTransformGroup(originIter, destIer, originGroupFrags, destGroupFrags)
+            manager.consumeElementsForTransformGroup(originIter, destIter, originGroupFrags, destGroupFrags)
 
-            val resultOriginGroupElements = originGroupFrags.toTypedArray()
-            val resultDestGroupElements = destGroupFrags.toTypedArray()
-
-            assertEquals(expectedOriginConsumed, resultOriginGroupElements.size, "origin consumed ($testType)")
-            assertEquals(expectedDestConsumed, resultDestGroupElements.size, "dest consumed ($testType)")
-
-            val slicedOrigin = origin.take(expectedOriginConsumed).map { IntRangeFragment(it) }.toTypedArray()
-            val slicedDest = dest.take(expectedDestConsumed).map { IntRangeFragment(it) }.toTypedArray()
-
-            assertContentEquals(slicedOrigin, resultOriginGroupElements, "origin elements ($testType)")
-            assertContentEquals(slicedDest, resultDestGroupElements, "dest elements ($testType)")
+            assertConsumed(expectedOriginConsumed, originIter, origin, originGroupFrags, "origin", testType)
+            assertConsumed(expectedDestConsumed, destIter, dest, destGroupFrags, "dest", testType)
         }
 
         fun testCase(
@@ -346,6 +357,13 @@ class ComplexRangeTransitionManagerTests {
             dest = arrayOf(0..2, 4..5, 7..11),
             expectedOriginConsumed = 1,
             expectedDestConsumed = 3
+        )
+
+        testCase(
+            origin = arrayOf(1..2, 6..7),
+            dest = arrayOf(2..3, 6..7),
+            expectedOriginConsumed = 1,
+            expectedDestConsumed = 1
         )
     }
 

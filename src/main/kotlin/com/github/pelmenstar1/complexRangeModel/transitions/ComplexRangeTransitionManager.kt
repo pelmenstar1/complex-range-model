@@ -110,6 +110,7 @@ class ComplexRangeTransitionManager<T>(
                 if (nextOriginFrag.overlapsWith(lastDestFrag)) {
                     originGroupFrags.add(nextOriginFrag)
                 } else {
+                    originIter.previous()
                     break
                 }
             }
@@ -133,6 +134,7 @@ class ComplexRangeTransitionManager<T>(
                 if (nextDestFrag.overlapsWith(lastOriginFrag)) {
                     destGroupFrags.add(nextDestFrag)
                 } else {
+                    destIter.previous()
                     break
                 }
             }
