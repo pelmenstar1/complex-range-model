@@ -1,5 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
+import com.github.pelmenstar1.complexRangeModel.IntFragmentElement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -7,8 +8,8 @@ class ComplexRangeTransitionTests {
     @Test
     fun reversedTest() {
         fun testCase(
-            initial: TransitionBuilder<Int>.() -> Unit,
-            reversed: TransitionBuilder<Int>.() -> Unit
+            initial: TransitionBuilder<IntFragmentElement>.() -> Unit,
+            reversed: TransitionBuilder<IntFragmentElement>.() -> Unit
         ) {
             val initialTransition = ComplexRangeTransition(initial)
 

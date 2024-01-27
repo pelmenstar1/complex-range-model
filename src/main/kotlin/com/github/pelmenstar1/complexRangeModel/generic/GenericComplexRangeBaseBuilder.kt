@@ -1,9 +1,10 @@
 package com.github.pelmenstar1.complexRangeModel.generic
 
+import com.github.pelmenstar1.complexRangeModel.FragmentElement
 import com.github.pelmenstar1.complexRangeModel.RangeFragment
 import com.github.pelmenstar1.complexRangeModel.RawLinkedList
 
-abstract class GenericComplexRangeBaseBuilder<T> {
+abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
     protected val fragments: RawLinkedList<RangeFragment<T>>
 
     protected constructor() {
@@ -79,11 +80,9 @@ abstract class GenericComplexRangeBaseBuilder<T> {
     // Tries to find the node after which the fragment should be inserted. It returns null, when
     // the fragment should be inserted before the head.
     private fun findNewFragmentInsertAfterNode(fragment: RangeFragment<T>): RawLinkedList.Node<RangeFragment<T>>? {
-        val support = fragment.support
-
         // It assumes that given fragment doesn't overlap with any of current fragments
         fragments.forEachNode { node ->
-            if (support.compare(fragment.start, node.value.start) < 0) {
+            if (fragment.isBefore(node.value)) {
                 return node.previous
             }
         }
@@ -142,15 +141,13 @@ abstract class GenericComplexRangeBaseBuilder<T> {
         affectedStartNode: RawLinkedList.Node<RangeFragment<T>>,
         affectedEndNode: RawLinkedList.Node<RangeFragment<T>>
     ) {
-        val support = excludeFragment.support
-
         val affectedStartFrag = affectedStartNode.value
         val affectedEndFrag = affectedEndNode.value
 
         val removalStartNode: RawLinkedList.Node<RangeFragment<T>>?
         val removalEndNode: RawLinkedList.Node<RangeFragment<T>>?
 
-        if (support.compare(excludeFragment.start, affectedStartFrag.start) <= 0) {
+        if (excludeFragment.isBefore(affectedStartFrag)) {
             // Something like:
             // affectedStartFrag:    [] [] []
             // excludeFragment:   [] [] [] [] ...
@@ -166,7 +163,7 @@ abstract class GenericComplexRangeBaseBuilder<T> {
             affectedStartNode.value = affectedStartFrag.withEndExclusive(excludeFragment.start)
         }
 
-        if (support.compare(excludeFragment.endInclusive, affectedEndFrag.endInclusive) >= 0) {
+        if (excludeFragment.isAfter(affectedEndFrag)) {
             // Something like:
             // affectedEndFrag:     [] [] []
             // excludeFragment: ... [] [] [] []
@@ -183,7 +180,7 @@ abstract class GenericComplexRangeBaseBuilder<T> {
         }
 
         if (removalStartNode != null && removalEndNode != null) {
-            if (support.compare(removalStartNode.value.start, removalEndNode.value.start) <= 0) {
+            if (removalStartNode.value.isBefore(removalEndNode.value)) {
                 fragments.removeBetween(removalStartNode, removalEndNode)
             }
         }

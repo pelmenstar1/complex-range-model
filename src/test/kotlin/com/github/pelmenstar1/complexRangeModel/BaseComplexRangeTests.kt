@@ -5,9 +5,9 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 abstract class BaseComplexRangeTests {
-    abstract fun createComplexRange(block: ComplexRangeBuilder<Int>.() -> Unit): ComplexRange<Int>
+    abstract fun createComplexRange(block: ComplexRangeBuilder<IntFragmentElement>.() -> Unit): ComplexRange<IntFragmentElement>
 
-    private fun createComplexRange(ranges: Array<IntRange>): ComplexRange<Int> {
+    private fun createComplexRange(ranges: Array<IntRange>): ComplexRange<IntFragmentElement> {
         return createComplexRange {
             ranges.forEach { fragment(it) }
         }

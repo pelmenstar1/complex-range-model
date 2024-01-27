@@ -1,10 +1,8 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
-import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
-import com.github.pelmenstar1.complexRangeModel.RangeFragment
-import com.github.pelmenstar1.complexRangeModel.mapToArray
+import com.github.pelmenstar1.complexRangeModel.*
 
-class TransitionGroupBuilder<T> {
+class TransitionGroupBuilder<T : FragmentElement<T>> {
     private val ops = ArrayList<TransitionOperation<T>>()
 
     fun insert(fragment: RangeFragment<T>) {
@@ -30,22 +28,22 @@ class TransitionGroupBuilder<T> {
     fun build(): TransitionGroup<T> = TransitionGroup.create(ops)
 }
 
-fun TransitionGroupBuilder<Int>.insert(range: IntRange) {
+fun TransitionGroupBuilder<IntFragmentElement>.insert(range: IntRange) {
     insert(IntRangeFragment(range))
 }
 
-fun TransitionGroupBuilder<Int>.remove(range: IntRange) {
+fun TransitionGroupBuilder<IntFragmentElement>.remove(range: IntRange) {
     remove(IntRangeFragment(range))
 }
 
-fun TransitionGroupBuilder<Int>.join(originRanges: Array<IntRange>, destRange: IntRange) {
+fun TransitionGroupBuilder<IntFragmentElement>.join(originRanges: Array<IntRange>, destRange: IntRange) {
     join(originRanges.mapToArray { IntRangeFragment(it) }, IntRangeFragment(destRange))
 }
 
-fun TransitionGroupBuilder<Int>.split(originRange: IntRange, destRanges: Array<IntRange>) {
+fun TransitionGroupBuilder<IntFragmentElement>.split(originRange: IntRange, destRanges: Array<IntRange>) {
     split(IntRangeFragment(originRange), destRanges.mapToArray { IntRangeFragment(it) })
 }
 
-fun TransitionGroupBuilder<Int>.transform(origin: IntRange, dest: IntRange){
+fun TransitionGroupBuilder<IntFragmentElement>.transform(origin: IntRange, dest: IntRange){
     transform(IntRangeFragment(origin), IntRangeFragment(dest))
 }

@@ -1,5 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
+import com.github.pelmenstar1.complexRangeModel.IntFragmentElement
 import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -9,7 +10,7 @@ import kotlin.test.assertTrue
 class TransitionGroupTests {
     @Test
     fun emptyTest() {
-        val group = TransitionGroup.empty<Int>()
+        val group = TransitionGroup.empty<IntFragmentElement>()
 
         assertTrue(group.isEmpty())
         assertEquals(0, group.size)
@@ -20,8 +21,8 @@ class TransitionGroupTests {
 
     @Test
     fun emptyEqualsTest() {
-        val emptyGroup = TransitionGroup.empty<Int>()
-        val emptyListGroup = TransitionGroup.create(emptyList<TransitionOperation<Int>>())
+        val emptyGroup = TransitionGroup.empty<IntFragmentElement>()
+        val emptyListGroup = TransitionGroup.create(emptyList<TransitionOperation<IntFragmentElement>>())
 
         assertEquals(emptyGroup, emptyGroup)
         assertEquals(emptyGroup, emptyListGroup)
@@ -87,8 +88,8 @@ class TransitionGroupTests {
 
     @Test
     fun hashCode_emptyToEmptyCollectionTest() {
-        val empty = TransitionGroup.empty<Int>()
-        val emptyCollection = TransitionGroup.create(emptyList<TransitionOperation<Int>>())
+        val empty = TransitionGroup.empty<IntFragmentElement>()
+        val emptyCollection = TransitionGroup.create(emptyList<TransitionOperation<IntFragmentElement>>())
 
         val emptyHash = empty.hashCode()
         val emptyColHash = emptyCollection.hashCode()
@@ -111,8 +112,8 @@ class TransitionGroupTests {
     @Test
     fun reversedTest() {
         fun testCase(
-            initialOps: TransitionGroupBuilder<Int>.() -> Unit,
-            reversedOps: TransitionGroupBuilder<Int>.() -> Unit
+            initialOps: TransitionGroupBuilder<IntFragmentElement>.() -> Unit,
+            reversedOps: TransitionGroupBuilder<IntFragmentElement>.() -> Unit
         ) {
             val initialGroup = TransitionGroup(initialOps)
 

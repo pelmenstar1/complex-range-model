@@ -1,27 +1,28 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
+import com.github.pelmenstar1.complexRangeModel.FragmentElement
 import com.github.pelmenstar1.complexRangeModel.emptyIterator
 import com.github.pelmenstar1.complexRangeModel.sequenceEquals
 import com.github.pelmenstar1.complexRangeModel.singleValueIterator
 
-interface TransitionGroup<T> : Collection<TransitionOperation<T>> {
+interface TransitionGroup<T : FragmentElement<T>> : Collection<TransitionOperation<T>> {
     fun reversed(): TransitionGroup<T>
 
     companion object {
         @Suppress("UNCHECKED_CAST")
-        fun <T> empty(): TransitionGroup<T> = EmptyTransitionGroup as TransitionGroup<T>
+        fun <T : FragmentElement<T>> empty(): TransitionGroup<T> = EmptyTransitionGroup as TransitionGroup<T>
 
-        fun <T> create(op: TransitionOperation<T>): TransitionGroup<T> {
+        fun <T : FragmentElement<T>> create(op: TransitionOperation<T>): TransitionGroup<T> {
             return SingleOpTransitionGroup(op)
         }
 
-        fun <T> create(ops: List<TransitionOperation<T>>): TransitionGroup<T> {
+        fun <T : FragmentElement<T>> create(ops: List<TransitionOperation<T>>): TransitionGroup<T> {
             return CollectionTransitionGroup(ops)
         }
     }
 }
 
-inline fun<T> TransitionGroup(block: TransitionGroupBuilder<T>.() -> Unit): TransitionGroup<T> {
+inline fun<T : FragmentElement<T>> TransitionGroup(block: TransitionGroupBuilder<T>.() -> Unit): TransitionGroup<T> {
     return TransitionGroupBuilder<T>().also(block).build()
 }
 
@@ -48,7 +49,7 @@ private object EmptyTransitionGroup : TransitionGroup<Nothing> {
     override fun toString(): String = "TransitionGroup()"
 }
 
-private class SingleOpTransitionGroup<T>(
+private class SingleOpTransitionGroup<T : FragmentElement<T>>(
     val singleValue: TransitionOperation<T>
 ) : TransitionGroup<T> {
     override val size: Int
@@ -97,7 +98,7 @@ private class SingleOpTransitionGroup<T>(
     }
 }
 
-private class CollectionTransitionGroup<T>(
+private class CollectionTransitionGroup<T : FragmentElement<T>>(
     private val ops: List<TransitionOperation<T>>
 ) : TransitionGroup<T> {
     override val size: Int

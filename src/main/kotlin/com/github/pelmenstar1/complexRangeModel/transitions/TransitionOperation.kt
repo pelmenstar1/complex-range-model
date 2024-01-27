@@ -1,11 +1,12 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
+import com.github.pelmenstar1.complexRangeModel.FragmentElement
 import com.github.pelmenstar1.complexRangeModel.RangeFragment
 
-sealed interface TransitionOperation<T> {
+sealed interface TransitionOperation<T : FragmentElement<T>> {
     fun reversed(): TransitionOperation<T>
 
-    sealed class StructuralOperation<T>(val fragment: RangeFragment<T>) : TransitionOperation<T> {
+    sealed class StructuralOperation<T : FragmentElement<T>>(val fragment: RangeFragment<T>) : TransitionOperation<T> {
         override fun equals(other: Any?): Boolean {
             if (other === this) return true
             if (other == null || javaClass != other.javaClass) return false
@@ -22,24 +23,25 @@ sealed interface TransitionOperation<T> {
         }
     }
 
-    class Insert<T>(fragment: RangeFragment<T>) : StructuralOperation<T>(fragment) {
+    class Insert<T : FragmentElement<T>>(fragment: RangeFragment<T>) : StructuralOperation<T>(fragment) {
         override fun reversed(): TransitionOperation<T> = Remove(fragment)
     }
-    class Remove<T>(fragment: RangeFragment<T>): StructuralOperation<T>(fragment) {
+
+    class Remove<T : FragmentElement<T>>(fragment: RangeFragment<T>) : StructuralOperation<T>(fragment) {
         override fun reversed(): TransitionOperation<T> = Insert(fragment)
     }
 
-    data class Transform<T>(
+    data class Transform<T : FragmentElement<T>>(
         val origin: RangeFragment<T>,
         val destination: RangeFragment<T>
-    ): TransitionOperation<T> {
+    ) : TransitionOperation<T> {
         override fun reversed(): TransitionOperation<T> = Transform(destination, origin)
     }
 
-    class Split<T>(
+    class Split<T : FragmentElement<T>>(
         val origin: RangeFragment<T>,
         val destinations: Array<RangeFragment<T>>
-    ): TransitionOperation<T> {
+    ) : TransitionOperation<T> {
         override fun reversed(): TransitionOperation<T> = Join(destinations, origin)
 
         override fun equals(other: Any?): Boolean {
@@ -55,10 +57,10 @@ sealed interface TransitionOperation<T> {
         }
     }
 
-    class Join<T>(
+    class Join<T : FragmentElement<T>>(
         val origins: Array<RangeFragment<T>>,
         val destination: RangeFragment<T>
-    ): TransitionOperation<T> {
+    ) : TransitionOperation<T> {
         override fun reversed(): TransitionOperation<T> = Split(destination, origins)
 
         override fun equals(other: Any?): Boolean {

@@ -1,8 +1,9 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
 import com.github.pelmenstar1.complexRangeModel.ArraySet
+import com.github.pelmenstar1.complexRangeModel.FragmentElement
 
-class TransitionBuilder<T> {
+class TransitionBuilder<T : FragmentElement<T>> {
     private val groups = ArraySet<TransitionGroup<T>>()
 
     inline fun group(block: TransitionGroupBuilder<T>.() -> Unit) {

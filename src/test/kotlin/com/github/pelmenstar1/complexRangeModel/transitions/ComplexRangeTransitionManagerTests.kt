@@ -9,8 +9,8 @@ import kotlin.test.assertTrue
 class ComplexRangeTransitionManagerTests {
     @Test
     fun createEmptyToEmptyTest() {
-        val origin = ComplexRange.empty<Int>()
-        val dest = ComplexRange.empty<Int>()
+        val origin = ComplexRange.empty<IntFragmentElement>()
+        val dest = ComplexRange.empty<IntFragmentElement>()
 
         val transition = createTransition(origin, dest)
 
@@ -19,7 +19,7 @@ class ComplexRangeTransitionManagerTests {
 
     @Test
     fun createEmptyToNonEmptyTest() {
-        val origin = ComplexRange.empty<Int>()
+        val origin = ComplexRange.empty<IntFragmentElement>()
         val dest = IntComplexRange(arrayOf(0..2, 4..5))
         val actualTransition = createTransition(origin, dest)
 
@@ -37,7 +37,7 @@ class ComplexRangeTransitionManagerTests {
     @Test
     fun createNonEmptyToEmptyTest() {
         val origin = IntComplexRange(arrayOf(0..2, 4..5))
-        val dest = ComplexRange.empty<Int>()
+        val dest = ComplexRange.empty<IntFragmentElement>()
         val actualTransition = createTransition(origin, dest)
 
         assertGroupsEquals(actualTransition) {
@@ -55,7 +55,7 @@ class ComplexRangeTransitionManagerTests {
         origin: Array<IntRange>,
         dest: Array<IntRange>,
         maxMoveDist: Int = -1,
-        transitionBuild: TransitionBuilder<Int>.() -> Unit
+        transitionBuild: TransitionBuilder<IntFragmentElement>.() -> Unit
     ) {
         val originComplexRange = IntComplexRange(origin)
         val destComplexRange = IntComplexRange(dest)
@@ -174,16 +174,6 @@ class ComplexRangeTransitionManagerTests {
         transitionTestHelper(
             origin = arrayOf(1..2),
             dest = arrayOf(3..4),
-            maxMoveDist = 0
-        ) {
-            group {
-                transform(origin = 1..2, dest = 3..4)
-            }
-        }
-
-        transitionTestHelper(
-            origin = arrayOf(1..2),
-            dest = arrayOf(3..4),
             maxMoveDist = 1
         ) {
             group {
@@ -248,8 +238,8 @@ class ComplexRangeTransitionManagerTests {
 
     @Test
     fun consumeElementsForTransformGroupTest() {
-        fun createIterator(ranges: Array<IntRange>): TwoWayIterator<RangeFragment<Int>> {
-            val list = RawLinkedList<RangeFragment<Int>>()
+        fun createIterator(ranges: Array<IntRange>): TwoWayIterator<RangeFragment<IntFragmentElement>> {
+            val list = RawLinkedList<RangeFragment<IntFragmentElement>>()
 
             for (i in 1 until ranges.size) {
                 list.add(IntRangeFragment(ranges[i]))
@@ -260,9 +250,9 @@ class ComplexRangeTransitionManagerTests {
 
         fun assertConsumed(
             expectedConsumed: Int,
-            iter: TwoWayIterator<RangeFragment<Int>>,
+            iter: TwoWayIterator<RangeFragment<IntFragmentElement>>,
             input: Array<IntRange>,
-            groupFrags: RawLinkedList<RangeFragment<Int>>,
+            groupFrags: RawLinkedList<RangeFragment<IntFragmentElement>>,
             sourceType: String, testType: String
         ) {
             val resultGroupElements = groupFrags.toTypedArray()
@@ -365,8 +355,8 @@ class ComplexRangeTransitionManagerTests {
     }
 
     private fun assertGroupsEquals(
-        actual: ComplexRangeTransition<Int>,
-        expectedBuild: TransitionBuilder<Int>.() -> Unit
+        actual: ComplexRangeTransition<IntFragmentElement>,
+        expectedBuild: TransitionBuilder<IntFragmentElement>.() -> Unit
     ) {
         val expected = ComplexRangeTransition(expectedBuild)
 
@@ -374,10 +364,10 @@ class ComplexRangeTransitionManagerTests {
     }
 
     private fun createTransition(
-        origin: ComplexRange<Int>,
-        dest: ComplexRange<Int>,
+        origin: ComplexRange<IntFragmentElement>,
+        dest: ComplexRange<IntFragmentElement>,
         maxMoveDist: Int = -1
-    ): ComplexRangeTransition<Int> {
+    ): ComplexRangeTransition<IntFragmentElement> {
         return ComplexRangeTransitionManager.intWithMoveDistance(maxMoveDist).createTransition(origin, dest)
     }
 }

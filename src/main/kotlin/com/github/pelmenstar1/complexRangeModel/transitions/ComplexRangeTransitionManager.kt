@@ -5,7 +5,7 @@ import com.github.pelmenstar1.complexRangeModel.*
 private typealias FragmentIterator<T> = TwoWayIterator<RangeFragment<T>>
 private typealias FragmentLinkedList<T> = RawLinkedList<RangeFragment<T>>
 
-class ComplexRangeTransitionManager<T>(
+class ComplexRangeTransitionManager<T : FragmentElement<T>>(
     private val fragmentFactory: RangeFragmentFactory<T>,
     private val proxDetector: FragmentProximityDetector<T>
 ) {
@@ -238,14 +238,14 @@ class ComplexRangeTransitionManager<T>(
     }
 
     companion object {
-        fun intNoMove(): ComplexRangeTransitionManager<Int> {
+        fun intNoMove(): ComplexRangeTransitionManager<IntFragmentElement> {
             return ComplexRangeTransitionManager(IntRangeFragmentFactory, FragmentProximityDetector.noMove())
         }
 
-        fun intWithMoveDistance(maxMoveDist: Int): ComplexRangeTransitionManager<Int> {
+        fun intWithMoveDistance(maxMoveDist: Int): ComplexRangeTransitionManager<IntFragmentElement> {
             return ComplexRangeTransitionManager(
                 IntRangeFragmentFactory,
-                FragmentProximityDetector.withMoveDistance(IntFragmentElementSupport, maxMoveDist)
+                FragmentProximityDetector.withMoveDistance(maxMoveDist)
             )
         }
     }

@@ -1,22 +1,22 @@
 package com.github.pelmenstar1.complexRangeModel
 
-interface ComplexRangeModify<T> {
+interface ComplexRangeModify<T : FragmentElement<T>> {
     fun set(fragment: RangeFragment<T>)
     fun unset(fragment: RangeFragment<T>)
 }
 
-fun ComplexRangeModify<Int>.set(start: Int, endInclusive: Int) {
+fun ComplexRangeModify<IntFragmentElement>.set(start: Int, endInclusive: Int) {
     set(IntRangeFragment(start, endInclusive))
 }
 
-fun ComplexRangeModify<Int>.set(range: IntRange) {
+fun ComplexRangeModify<IntFragmentElement>.set(range: IntRange) {
     set(range.first, range.last)
 }
 
-fun ComplexRangeModify<Int>.unset(start: Int, endInclusive: Int) {
+fun ComplexRangeModify<IntFragmentElement>.unset(start: Int, endInclusive: Int) {
     unset(IntRangeFragment(start, endInclusive))
 }
 
-fun ComplexRangeModify<Int>.unset(range: IntRange) {
+fun ComplexRangeModify<IntFragmentElement>.unset(range: IntRange) {
     unset(range.first, range.last)
 }

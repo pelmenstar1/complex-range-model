@@ -1,27 +1,23 @@
 package com.github.pelmenstar1.complexRangeModel
 
-abstract class RangeFragment<T>(val start: T, val endInclusive: T) {
-    abstract val support: FragmentElementSupport<T>
-
+class RangeFragment<T : FragmentElement<T>>(val start: T, val endInclusive: T)  {
     val endExclusive: T
-        get() = support.nextValue(endInclusive)
+        get() = endInclusive.next()
 
     init {
-        require(compare(start, endInclusive) <= 0) {
-            "Invalid range parameters"
-        }
+        require(start <= endInclusive) { "Invalid range parameters" }
     }
 
-    fun withStart(newStart: T): RangeFragment<T> {
-        return if (newStart == start) this else createSelf(newStart, endInclusive)
+    fun withStart(value: T): RangeFragment<T> {
+        return if (value == start) this else RangeFragment(value, endInclusive)
     }
 
-    fun withEnd(newEnd: T): RangeFragment<T> {
-        return if (newEnd == endInclusive) this else createSelf(start, newEnd)
+    fun withEnd(value: T): RangeFragment<T> {
+        return if (value == endInclusive) this else RangeFragment(start, value)
     }
 
-    fun withEndExclusive(newEnd: T): RangeFragment<T> {
-        return withEnd(support.previousValue(newEnd))
+    fun withEndExclusive(value: T): RangeFragment<T> {
+        return withEnd(value.previous())
     }
 
     override fun equals(other: Any?): Boolean {
@@ -37,23 +33,23 @@ abstract class RangeFragment<T>(val start: T, val endInclusive: T) {
     }
 
     operator fun contains(value: T): Boolean {
-        return compare(value, start) >= 0 && compare(value, endInclusive) <= 0
+        return value in start..endInclusive
     }
 
     fun containsExclusive(other: RangeFragment<T>): Boolean {
-        return compare(other.start, start) > 0 && compare(other.endInclusive, endInclusive) < 0
+        return other.start > start && other.endInclusive < endInclusive
     }
 
     fun containsCompletely(other: RangeFragment<T>): Boolean {
-        return compare(other.start, start) >= 0 && compare(other.endInclusive, endInclusive) <= 0
+        return other.start >= start && other.endInclusive <= endInclusive
     }
 
     fun leftContains(other: RangeFragment<T>): Boolean {
-        return other.endInclusive in this && compare(other.start, start) <= 0
+        return other.endInclusive in this && other.start <= start
     }
 
     fun overlapsWith(other: RangeFragment<T>): Boolean {
-        return compare(start, other.endInclusive) <= 0 && compare(other.start, endInclusive) <= 0
+        return start <= other.endInclusive && other.start <= endInclusive
     }
 
     fun canUniteWith(other: RangeFragment<T>): Boolean {
@@ -61,69 +57,63 @@ abstract class RangeFragment<T>(val start: T, val endInclusive: T) {
         // 1. Overlap
         // 2. Next to each other, e.g [1; 2] and [3; 4] can be united to [1; 4]
         return overlapsWith(other) ||
-                support.isNextToOther(endInclusive, other.start) ||
-                support.isNextToOther(other.endInclusive, start)
+                endInclusive.next() == other.start ||
+                other.endInclusive.next() == start
     }
 
     fun uniteWith(other: RangeFragment<T>): RangeFragment<T>? {
         if (canUniteWith(other)) {
-            return createSelf(minOf(start, other.start), maxOf(endInclusive, other.endInclusive))
+            return RangeFragment(minOf(start, other.start), maxOf(endInclusive, other.endInclusive))
         }
 
         return null
     }
 
-    fun distanceTo(other: RangeFragment<T>): T {
-        val s = support
-
-        return if (canUniteWith(other)) {
-            s.zero
-        } else {
-            val startDiff = s.difference(start, other.start)
-
-            if (s.isPositive(startDiff)) {
-                startDiff
-            } else {
-                s.difference(other.endInclusive, endInclusive)
-            }
-        }
+    fun isBefore(other: RangeFragment<T>): Boolean {
+        return start <= other.start
     }
 
-    private fun minOf(a: T, b: T): T = if(compare(a, b) <= 0) a else b
-    private fun maxOf(a: T, b: T): T = if(compare(a, b) >= 0) a else b
-
-    private fun compare(a: T, b: T): Int = support.compare(a, b)
-
-    protected abstract fun createSelf(start: T, endInclusive: T): RangeFragment<T>
+    fun isAfter(other: RangeFragment<T>): Boolean {
+        return endInclusive >= other.endInclusive
+    }
 }
 
-fun interface RangeFragmentFactory<T> {
+fun<T : DistanceFragmentElement<T, D>, D> RangeFragment<T>.isDistanceLessThanOrEqual(
+    other: RangeFragment<T>,
+    maxDist: D
+): Boolean {
+    return if (overlapsWith(other)) {
+        return true
+    } else {
+        val thisStart = start
+        val otherStart = other.start
+
+        if (thisStart >= otherStart) {
+            other.endInclusive.isDistanceLessThanOrEqual(thisStart, maxDist)
+        } else {
+            endInclusive.isDistanceLessThanOrEqual(otherStart, maxDist)
+        }
+    }
+}
+
+fun interface RangeFragmentFactory<T : FragmentElement<T>> {
     fun create(start: T, endInclusive: T): RangeFragment<T>
 }
 
-object IntRangeFragmentFactory : RangeFragmentFactory<Int> {
-    override fun create(start: Int, endInclusive: Int): RangeFragment<Int> {
+object IntRangeFragmentFactory : RangeFragmentFactory<IntFragmentElement> {
+    override fun create(start: IntFragmentElement, endInclusive: IntFragmentElement): RangeFragment<IntFragmentElement> {
         return IntRangeFragment(start, endInclusive)
     }
 }
 
-private class IntRangeFragment(
-    start: Int,
-    endInclusive: Int,
-    @Suppress("UNUSED_PARAMETER") marker: Boolean
-) : RangeFragment<Int>(start, endInclusive) {
-    override val support: FragmentElementSupport<Int>
-        get() = IntFragmentElementSupport
-
-    override fun createSelf(start: Int, endInclusive: Int): RangeFragment<Int> {
-        return IntRangeFragment(start, endInclusive)
-    }
+fun IntRangeFragment(start: IntFragmentElement, endInclusive: IntFragmentElement): RangeFragment<IntFragmentElement> {
+    return RangeFragment(start, endInclusive)
 }
 
-fun IntRangeFragment(start: Int, endInclusive: Int): RangeFragment<Int> {
-    return IntRangeFragment(start, endInclusive, false)
+fun IntRangeFragment(start: Int, endInclusive: Int): RangeFragment<IntFragmentElement> {
+    return IntRangeFragment(IntFragmentElement(start), IntFragmentElement(endInclusive))
 }
 
-fun IntRangeFragment(range: IntRange): RangeFragment<Int> {
+fun IntRangeFragment(range: IntRange): RangeFragment<IntFragmentElement> {
     return IntRangeFragment(range.first, range.last)
 }
