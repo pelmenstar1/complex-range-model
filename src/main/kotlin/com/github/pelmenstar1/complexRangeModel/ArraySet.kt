@@ -1,6 +1,5 @@
 package com.github.pelmenstar1.complexRangeModel
 
-
 class ArraySet<T> : MutableSet<T> {
     private var elements: Array<Any?>
     private var hashes: IntArray
@@ -8,6 +7,9 @@ class ArraySet<T> : MutableSet<T> {
 
     override val size: Int
         get() = _size
+
+    val capacity: Int
+        get() = elements.size
 
     constructor() {
         elements = emptyArray()
@@ -19,12 +21,7 @@ class ArraySet<T> : MutableSet<T> {
         hashes = IntArray(capacity)
     }
 
-    constructor(col: Collection<T>) {
-        val capacity = col.size
-
-        elements = arrayOfNulls(capacity)
-        hashes = IntArray(capacity)
-
+    constructor(col: Collection<T>) : this(capacity = col.size) {
         addAll(col)
     }
 
@@ -195,6 +192,17 @@ class ArraySet<T> : MutableSet<T> {
         _size = 0
     }
 
+    inline fun<R> map(transform: (T) -> R): ArraySet<R> {
+        // Preserve capacity
+        val newSet = ArraySet<R>(capacity)
+
+        for (i in 0 until size) {
+            newSet.add(transform(get(i)))
+        }
+
+        return newSet
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
 
@@ -245,6 +253,5 @@ class ArraySet<T> : MutableSet<T> {
         override fun remove() {
             removeAt(index - 1)
         }
-
     }
 }

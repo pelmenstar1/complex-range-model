@@ -2,8 +2,10 @@ package com.github.pelmenstar1.complexRangeModel.transitions
 
 import com.github.pelmenstar1.complexRangeModel.RangeFragment
 
-sealed class TransitionOperation<T> {
-    sealed class StructuralOperation<T>(val fragment: RangeFragment<T>) : TransitionOperation<T>() {
+sealed interface TransitionOperation<T> {
+    fun reversed(): TransitionOperation<T>
+
+    sealed class StructuralOperation<T>(val fragment: RangeFragment<T>) : TransitionOperation<T> {
         override fun equals(other: Any?): Boolean {
             if (other === this) return true
             if (other == null || javaClass != other.javaClass) return false
@@ -20,18 +22,26 @@ sealed class TransitionOperation<T> {
         }
     }
 
-    class Insert<T>(fragment: RangeFragment<T>) : StructuralOperation<T>(fragment)
-    class Remove<T>(fragment: RangeFragment<T>): StructuralOperation<T>(fragment)
+    class Insert<T>(fragment: RangeFragment<T>) : StructuralOperation<T>(fragment) {
+        override fun reversed(): TransitionOperation<T> = Remove(fragment)
+    }
+    class Remove<T>(fragment: RangeFragment<T>): StructuralOperation<T>(fragment) {
+        override fun reversed(): TransitionOperation<T> = Insert(fragment)
+    }
 
     data class Transform<T>(
         val origin: RangeFragment<T>,
         val destination: RangeFragment<T>
-    ): TransitionOperation<T>()
+    ): TransitionOperation<T> {
+        override fun reversed(): TransitionOperation<T> = Transform(destination, origin)
+    }
 
     class Split<T>(
         val origin: RangeFragment<T>,
         val destinations: Array<RangeFragment<T>>
-    ): TransitionOperation<T>() {
+    ): TransitionOperation<T> {
+        override fun reversed(): TransitionOperation<T> = Join(destinations, origin)
+
         override fun equals(other: Any?): Boolean {
             return other is Split<*> && origin == other.origin && destinations.contentEquals(other.destinations)
         }
@@ -48,7 +58,9 @@ sealed class TransitionOperation<T> {
     class Join<T>(
         val origins: Array<RangeFragment<T>>,
         val destination: RangeFragment<T>
-    ): TransitionOperation<T>() {
+    ): TransitionOperation<T> {
+        override fun reversed(): TransitionOperation<T> = Split(destination, origins)
+
         override fun equals(other: Any?): Boolean {
             return other is Join<*> && origins.contentEquals(other.origins) && destination == other.destination
         }

@@ -84,4 +84,62 @@ class TransitionGroupTests {
 
         assertEquals(group1, group2)
     }
+
+    @Test
+    fun hashCode_emptyToEmptyCollectionTest() {
+        val empty = TransitionGroup.empty<Int>()
+        val emptyCollection = TransitionGroup.create(emptyList<TransitionOperation<Int>>())
+
+        val emptyHash = empty.hashCode()
+        val emptyColHash = emptyCollection.hashCode()
+
+        assertEquals(emptyHash, emptyColHash)
+    }
+
+    @Test
+    fun hashCode_singleToSingleCollectionTest() {
+        val op = TransitionOperation.Insert(IntRangeFragment(0, 1))
+        val single = TransitionGroup.create(op)
+        val singleCol = TransitionGroup.create(listOf(op))
+
+        val singleHash = single.hashCode()
+        val singleColHash = singleCol.hashCode()
+
+        assertEquals(singleHash, singleColHash)
+    }
+
+    @Test
+    fun reversedTest() {
+        fun testCase(
+            initialOps: TransitionGroupBuilder<Int>.() -> Unit,
+            reversedOps: TransitionGroupBuilder<Int>.() -> Unit
+        ) {
+            val initialGroup = TransitionGroup(initialOps)
+
+            val expectedReversedGroup = TransitionGroup(reversedOps)
+            val actualReversedGroup = initialGroup.reversed()
+
+            assertEquals(expectedReversedGroup, actualReversedGroup)
+        }
+
+        testCase(
+            initialOps = {
+                insert(1..2)
+                remove(3..4)
+            },
+            reversedOps = {
+                insert(3..4)
+                remove(1..2)
+            }
+        )
+
+        testCase(
+            initialOps = {
+                insert(1..2)
+            },
+            reversedOps = {
+                remove(1..2)
+            }
+        )
+    }
 }

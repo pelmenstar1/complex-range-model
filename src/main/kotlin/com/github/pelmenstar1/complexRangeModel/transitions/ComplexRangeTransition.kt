@@ -3,6 +3,8 @@ package com.github.pelmenstar1.complexRangeModel.transitions
 import com.github.pelmenstar1.complexRangeModel.ArraySet
 
 interface ComplexRangeTransition<T> : Set<TransitionGroup<T>> {
+    fun reversed(): ComplexRangeTransition<T>
+
     operator fun get(index: Int): TransitionGroup<T>
 
     companion object {
@@ -30,6 +32,13 @@ private class ArraySetComplexRangeTransition<T>(
 
     override fun contains(element: TransitionGroup<T>) = groups.contains(element)
     override fun containsAll(elements: Collection<TransitionGroup<T>>) = groups.containsAll(elements)
+
+    override fun reversed(): ComplexRangeTransition<T> {
+        // We only reverse group's content, because transition is a set and there's no order.
+        val revGroups = groups.map { it.reversed() }
+
+        return ArraySetComplexRangeTransition(revGroups)
+    }
 
     @Suppress("UNCHECKED_CAST")
     override fun equals(other: Any?): Boolean {

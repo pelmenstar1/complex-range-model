@@ -5,6 +5,8 @@ import com.github.pelmenstar1.complexRangeModel.sequenceEquals
 import com.github.pelmenstar1.complexRangeModel.singleValueIterator
 
 interface TransitionGroup<T> : Collection<TransitionOperation<T>> {
+    fun reversed(): TransitionGroup<T>
+
     companion object {
         @Suppress("UNCHECKED_CAST")
         fun <T> empty(): TransitionGroup<T> = EmptyTransitionGroup as TransitionGroup<T>
@@ -13,15 +15,21 @@ interface TransitionGroup<T> : Collection<TransitionOperation<T>> {
             return SingleOpTransitionGroup(op)
         }
 
-        fun <T> create(list: Collection<TransitionOperation<T>>): TransitionGroup<T> {
-            return CollectionTransitionGroup(list)
+        fun <T> create(ops: List<TransitionOperation<T>>): TransitionGroup<T> {
+            return CollectionTransitionGroup(ops)
         }
     }
+}
+
+inline fun<T> TransitionGroup(block: TransitionGroupBuilder<T>.() -> Unit): TransitionGroup<T> {
+    return TransitionGroupBuilder<T>().also(block).build()
 }
 
 private object EmptyTransitionGroup : TransitionGroup<Nothing> {
     override val size: Int
         get() = 0
+
+    override fun reversed(): TransitionGroup<Nothing> = EmptyTransitionGroup
 
     override fun isEmpty() = true
 
@@ -47,6 +55,8 @@ private class SingleOpTransitionGroup<T>(
         get() = 1
 
     override fun isEmpty(): Boolean = false
+
+    override fun reversed(): TransitionGroup<T> = this
 
     override fun iterator(): Iterator<TransitionOperation<T>> {
         return singleValueIterator(singleValue)
@@ -88,22 +98,39 @@ private class SingleOpTransitionGroup<T>(
 }
 
 private class CollectionTransitionGroup<T>(
-    private val ops: Collection<TransitionOperation<T>>
+    private val ops: List<TransitionOperation<T>>
 ) : TransitionGroup<T> {
     override val size: Int
         get() = ops.size
 
     override fun isEmpty() = ops.isEmpty()
 
-    override fun containsAll(elements: Collection<TransitionOperation<T>>) = ops.containsAll(elements)
+    override fun reversed(): TransitionGroup<T> {
+        val size = ops.size
+        if (size == 1) {
+            return SingleOpTransitionGroup(ops[0].reversed())
+        }
+
+        val revOps = ArrayList<TransitionOperation<T>>(size)
+
+        for (i in 0 until size) {
+            val op = ops[size - i - 1]
+
+            revOps.add(op.reversed())
+        }
+
+        return CollectionTransitionGroup(revOps)
+    }
+
     override fun contains(element: TransitionOperation<T>) = ops.contains(element)
+    override fun containsAll(elements: Collection<TransitionOperation<T>>) = ops.containsAll(elements)
 
     override fun iterator() = ops.iterator()
 
     override fun equals(other: Any?): Boolean {
         return when (other) {
             is CollectionTransitionGroup<*> -> ops == other.ops
-            is SingleOpTransitionGroup<*> -> ops.size == 1 && ops.first() == other.singleValue
+            is SingleOpTransitionGroup<*> -> ops.size == 1 && ops[0] == other.singleValue
             is EmptyTransitionGroup -> ops.isEmpty()
             is TransitionGroup<*> -> sequenceEquals(other)
             else -> false
