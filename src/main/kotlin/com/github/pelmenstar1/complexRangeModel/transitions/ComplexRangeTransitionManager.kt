@@ -41,7 +41,6 @@ class ComplexRangeTransitionManager<T>(
                     destGroupsFrags.add(destFrag)
 
                     consumeElementsForTransformGroup(
-                        originFrag, destFrag,
                         originIter, destIter,
                         originGroupFrags, destGroupsFrags
                     )
@@ -82,34 +81,60 @@ class ComplexRangeTransitionManager<T>(
         }
     }
 
-    private fun consumeElementsForTransformGroup(
-        initialOriginAnchor: RangeFragment<T>,
-        initialDestAnchor: RangeFragment<T>,
+    // Internal for tests
+    internal fun consumeElementsForTransformGroup(
         originIter: FragmentIterator<T>,
         destIter: FragmentIterator<T>,
         originGroupFrags: FragmentLinkedList<T>,
         destGroupFrags: FragmentLinkedList<T>
     ) {
-        var originAnchor: RangeFragment<T> = initialOriginAnchor
-        var destAnchor: RangeFragment<T> = initialDestAnchor
-
         while (true) {
-            val lastDestFrag = consumeLaneForTransform(originAnchor, destIter, destGroupFrags)
-            if (lastDestFrag != null) {
-                destAnchor = lastDestFrag
-            }
+            var lastOriginFrag = originGroupFrags.lastValue
 
-            val lastOriginFrag = consumeLaneForTransform(destAnchor, originIter, originGroupFrags)
-            if (lastOriginFrag != null) {
-                originAnchor = lastOriginFrag
-            }
+            val nonOverlappingDestFrag = consumeLaneForTransform(lastOriginFrag, destIter, destGroupFrags)
+            val lastDestFrag = destGroupFrags.lastValue
 
-            if (originAnchor == destAnchor || !originAnchor.overlapsWith(destAnchor)) {
+            if (nonOverlappingDestFrag == null) {
+                consumeLaneForTransform(lastDestFrag, originIter, originGroupFrags)
+
                 break
             }
 
-            if (!originIter.hasNext() && !destIter.hasNext()) {
+            if (lastOriginFrag == nonOverlappingDestFrag) {
                 break
+            }
+
+            if (originIter.hasNext()) {
+                val nextOriginFrag = originIter.next()
+
+                if (nextOriginFrag.overlapsWith(lastDestFrag)) {
+                    originGroupFrags.add(nextOriginFrag)
+                } else {
+                    break
+                }
+            }
+
+            val nonOverlappingOriginFrag = consumeLaneForTransform(lastDestFrag, originIter, originGroupFrags)
+            lastOriginFrag = originGroupFrags.lastValue
+
+            if (nonOverlappingOriginFrag == null) {
+                consumeLaneForTransform(lastOriginFrag, destIter, destGroupFrags)
+
+                break
+            }
+
+            if (lastDestFrag == nonOverlappingOriginFrag) {
+                break
+            }
+
+            if (destIter.hasNext()) {
+                val nextDestFrag = destIter.next()
+
+                if (nextDestFrag.overlapsWith(lastOriginFrag)) {
+                    destGroupFrags.add(nextDestFrag)
+                } else {
+                    break
+                }
             }
         }
     }
@@ -119,10 +144,8 @@ class ComplexRangeTransitionManager<T>(
         iter: FragmentIterator<T>,
         output: FragmentLinkedList<T>
     ): RangeFragment<T>? {
-        var frag: RangeFragment<T>? = null
-
         while (iter.hasNext()) {
-            frag = iter.next()
+            val frag = iter.next()
 
             if (frag == anchorFrag || !frag.overlapsWith(anchorFrag)) {
                 iter.previous()
@@ -132,7 +155,7 @@ class ComplexRangeTransitionManager<T>(
             output.add(frag)
         }
 
-        return frag
+        return null
     }
 
     private fun createTransformGroup(

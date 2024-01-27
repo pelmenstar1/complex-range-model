@@ -19,6 +19,9 @@ class RawLinkedList<T> : MutableCollection<T> {
     val firstValue: T
         get() = _head?.value ?: throw IllegalStateException("List is empty")
 
+    val lastValue: T
+        get() = _tail?.value ?: throw IllegalStateException("List is empty")
+
     override val size: Int
         get() = _size
 

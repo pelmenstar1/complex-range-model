@@ -1,8 +1,8 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
 import com.github.pelmenstar1.complexRangeModel.*
-import kotlin.math.max
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -66,7 +66,7 @@ class ComplexRangeTransitionManagerTests {
     }
 
     @Test
-    fun createNonEmptyToNonEmpty_singleGroupTest(){
+    fun createNonEmptyToNonEmpty_singleGroupTest() {
         // Join + Transform
 
         transitionTestHelper(
@@ -177,7 +177,7 @@ class ComplexRangeTransitionManagerTests {
             maxMoveDist = 0
         ) {
             group {
-                transform(origin = 1..2,  dest = 3..4)
+                transform(origin = 1..2, dest = 3..4)
             }
         }
 
@@ -187,7 +187,7 @@ class ComplexRangeTransitionManagerTests {
             maxMoveDist = 1
         ) {
             group {
-                transform(origin = 1..2,  dest = 3..4)
+                transform(origin = 1..2, dest = 3..4)
             }
         }
 
@@ -244,6 +244,109 @@ class ComplexRangeTransitionManagerTests {
                 transform(origin = 9..10, dest = 10..11)
             }
         }
+    }
+
+    @Test
+    fun consumeElementsForTransformGroupTest() {
+        fun createIterator(ranges: Array<IntRange>): TwoWayIterator<RangeFragment<Int>> {
+            val list = RawLinkedList<RangeFragment<Int>>()
+
+            for (i in 1 until ranges.size) {
+                list.add(IntRangeFragment(ranges[i]))
+            }
+
+            return list.twoWayIterator()
+        }
+
+        fun testCaseBase(
+            origin: Array<IntRange>, dest: Array<IntRange>,
+            expectedOriginConsumed: Int, expectedDestConsumed: Int,
+            isForward: Boolean
+        ) {
+            val testType = if (isForward) "forward" else "backward"
+
+            val originIter = createIterator(origin)
+            val destIer = createIterator(dest)
+
+            val originGroupFrags = RawLinkedList<RangeFragment<Int>>()
+            val destGroupFrags = RawLinkedList<RangeFragment<Int>>()
+
+            originGroupFrags.add(IntRangeFragment(origin[0]))
+            destGroupFrags.add(IntRangeFragment(dest[0]))
+
+            val manager = ComplexRangeTransitionManager.intNoMove()
+            manager.consumeElementsForTransformGroup(originIter, destIer, originGroupFrags, destGroupFrags)
+
+            val resultOriginGroupElements = originGroupFrags.toTypedArray()
+            val resultDestGroupElements = destGroupFrags.toTypedArray()
+
+            assertEquals(expectedOriginConsumed, resultOriginGroupElements.size, "origin consumed ($testType)")
+            assertEquals(expectedDestConsumed, resultDestGroupElements.size, "dest consumed ($testType)")
+
+            val slicedOrigin = origin.take(expectedOriginConsumed).map { IntRangeFragment(it) }.toTypedArray()
+            val slicedDest = dest.take(expectedDestConsumed).map { IntRangeFragment(it) }.toTypedArray()
+
+            assertContentEquals(slicedOrigin, resultOriginGroupElements, "origin elements ($testType)")
+            assertContentEquals(slicedDest, resultDestGroupElements, "dest elements ($testType)")
+        }
+
+        fun testCase(
+            origin: Array<IntRange>, dest: Array<IntRange>,
+            expectedOriginConsumed: Int, expectedDestConsumed: Int
+        ) {
+            // Grouping must be commutative
+            testCaseBase(origin, dest, expectedOriginConsumed, expectedDestConsumed, isForward = true)
+            testCaseBase(dest, origin, expectedDestConsumed, expectedOriginConsumed, isForward = false)
+        }
+
+        testCase(
+            origin = arrayOf(1..3),
+            dest = arrayOf(1..1),
+            expectedOriginConsumed = 1,
+            expectedDestConsumed = 1
+        )
+
+        testCase(
+            origin = arrayOf(1..3),
+            dest = arrayOf(1..1, 3..3),
+            expectedOriginConsumed = 1,
+            expectedDestConsumed = 2
+        )
+
+        testCase(
+            origin = arrayOf(1..4, 6..8),
+            dest = arrayOf(1..1, 3..4, 7..7),
+            expectedOriginConsumed = 1,
+            expectedDestConsumed = 2
+        )
+
+        testCase(
+            origin = arrayOf(1..3, 5..8),
+            dest = arrayOf(1..1, 3..6),
+            expectedOriginConsumed = 2,
+            expectedDestConsumed = 2
+        )
+
+        testCase(
+            origin = arrayOf(1..1, 3..12, 14..16, 18..19),
+            dest = arrayOf(1..3, 6..6, 8..9, 11..14, 16..16, 19..19),
+            expectedOriginConsumed = 3,
+            expectedDestConsumed = 5
+        )
+
+        testCase(
+            origin = arrayOf(1..3, 5..8, 10..11),
+            dest = arrayOf(1..1, 3..6),
+            expectedOriginConsumed = 2,
+            expectedDestConsumed = 2
+        )
+
+        testCase(
+            origin = arrayOf(1..10),
+            dest = arrayOf(0..2, 4..5, 7..11),
+            expectedOriginConsumed = 1,
+            expectedDestConsumed = 3
+        )
     }
 
     private fun assertGroupsEquals(
