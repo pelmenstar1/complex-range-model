@@ -45,10 +45,6 @@ class GenericComplexRange<T : FragmentElement<T>> internal constructor(
             append(')')
         }
     }
-
-    companion object {
-        fun <T : FragmentElement<T>> empty() = GenericComplexRange<T>(RawLinkedList())
-    }
 }
 
 class GenericComplexRangeBuilder<T : FragmentElement<T>> : GenericComplexRangeBaseBuilder<T>(), ComplexRangeBuilder<T> {
