@@ -5,10 +5,7 @@ import com.github.pelmenstar1.complexRangeModel.*
 class GenericComplexRange<T : FragmentElement<T>> internal constructor(
     private val fragments: RawLinkedList<RangeFragment<T>>
 ) : ComplexRange<T> {
-    override val size: Int
-        get() = fragments.size
-
-    override fun isEmpty() = fragments.isEmpty()
+    private var elements: ArrayList<T>? = null
 
     override fun modify(block: ComplexRangeModify<T>.() -> Unit): ComplexRange<T> {
         val copied = fragments.copyOf()
@@ -17,22 +14,35 @@ class GenericComplexRange<T : FragmentElement<T>> internal constructor(
         return GenericComplexRange(copied)
     }
 
-    operator fun get(index: Int): RangeFragment<T> {
-        return fragments[index]
+    override fun fragments(): List<RangeFragment<T>> {
+        return fragments
     }
 
-    override fun containsAll(elements: Collection<RangeFragment<T>>): Boolean {
-        return elements.all { contains(it) }
+    override fun elements(): List<T> {
+        var result = elements
+        if (result == null) {
+            result = createElements()
+            elements = result
+        }
+
+        return result
     }
 
-    override fun contains(element: RangeFragment<T>): Boolean {
-        return fragments.contains(element)
+    private fun createElements(): ArrayList<T> {
+        val list = ArrayList<T>()
+        fragments.forEachForward { fragment ->
+            fragment.forEachElement { element ->
+                list.add(element)
+            }
+        }
+
+        return list
     }
 
     override fun equals(other: Any?): Boolean {
         return when(other) {
             is GenericComplexRange<*> -> fragments == other.fragments
-            is ComplexRange<*> -> sequenceEquals(other)
+            is ComplexRange<*> -> fragments.sequenceEquals(other.fragments())
             else -> false
         }
     }
@@ -46,7 +56,7 @@ class GenericComplexRange<T : FragmentElement<T>> internal constructor(
             append("ComplexRange(")
 
             var isFirst = true
-            fragments.forEach { frag ->
+            fragments.forEachForward { frag ->
                 if (!isFirst) {
                     append(", ")
                 }
@@ -57,14 +67,6 @@ class GenericComplexRange<T : FragmentElement<T>> internal constructor(
 
             append(')')
         }
-    }
-
-    override fun iterator(): Iterator<RangeFragment<T>> {
-        return fragments.iterator()
-    }
-
-    override fun twoWayIterator(): TwoWayIterator<RangeFragment<T>> {
-        return fragments.twoWayIterator()
     }
 
     companion object {

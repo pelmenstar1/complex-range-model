@@ -2,7 +2,7 @@ package com.github.pelmenstar1.complexRangeModel.transitions
 
 import com.github.pelmenstar1.complexRangeModel.*
 
-private typealias FragmentIterator<T> = TwoWayIterator<RangeFragment<T>>
+private typealias FragmentIterator<T> = ListIterator<RangeFragment<T>>
 private typealias FragmentLinkedList<T> = RawLinkedList<RangeFragment<T>>
 
 class ComplexRangeTransitionManager<T : FragmentElement<T>>(
@@ -11,8 +11,8 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
 ) {
     fun createTransition(origin: ComplexRange<T>, dest: ComplexRange<T>): ComplexRangeTransition<T> {
         val groups = ArraySet<TransitionGroup<T>>()
-        val originIter = origin.twoWayIterator()
-        val destIter = dest.twoWayIterator()
+        val originIter = origin.fragments().listIterator()
+        val destIter = dest.fragments().listIterator()
 
         while(true) {
             val originHasNext = originIter.hasNext()

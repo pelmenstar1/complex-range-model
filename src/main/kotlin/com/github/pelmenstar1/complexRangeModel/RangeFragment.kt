@@ -1,6 +1,9 @@
 package com.github.pelmenstar1.complexRangeModel
 
-class RangeFragment<T : FragmentElement<T>>(val start: T, val endInclusive: T)  {
+class RangeFragment<T : FragmentElement<T>>(
+    override val start: T,
+    override val endInclusive: T
+) : ClosedRange<T>, Iterable<T>  {
     val endExclusive: T
         get() = endInclusive.next()
 
@@ -20,6 +23,19 @@ class RangeFragment<T : FragmentElement<T>>(val start: T, val endInclusive: T)  
         return withEnd(value.previous())
     }
 
+    inline fun forEachElement(block: (T) -> Unit) {
+        var current = start
+        while (true) {
+            block(current)
+
+            if (current == endInclusive) {
+                break
+            }
+
+            current = current.next()
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         return other is RangeFragment<*> && start == other.start && endInclusive == other.endInclusive
     }
@@ -32,7 +48,7 @@ class RangeFragment<T : FragmentElement<T>>(val start: T, val endInclusive: T)  
         return "[$start, $endInclusive]"
     }
 
-    operator fun contains(value: T): Boolean {
+    override fun contains(value: T): Boolean {
         return value in start..endInclusive
     }
 
@@ -75,6 +91,23 @@ class RangeFragment<T : FragmentElement<T>>(val start: T, val endInclusive: T)  
 
     fun isAfter(other: RangeFragment<T>): Boolean {
         return endInclusive >= other.endInclusive
+    }
+
+    override fun iterator(): Iterator<T> = IteratorImpl(start, endInclusive)
+
+    private class IteratorImpl<T : FragmentElement<T>>(start: T, private val end: T) : Iterator<T> {
+        private var current = start
+
+        override fun hasNext(): Boolean {
+            return current < end
+        }
+
+        override fun next(): T {
+            val r = current.next()
+            current = r
+
+            return r
+        }
     }
 }
 

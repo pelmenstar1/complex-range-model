@@ -41,7 +41,7 @@ abstract class BaseComplexRangeTests {
             IntRangeFragment(0, 2),
             IntRangeFragment(4, 5)
         )
-        val actualFragments = newRange.toTypedArray()
+        val actualFragments = newRange.fragments().toTypedArray()
 
         assertContentEquals(expectedFragments, actualFragments)
     }
@@ -55,7 +55,7 @@ abstract class BaseComplexRangeTests {
             }
 
             val expectedFragments = expectedRanges.map { IntRangeFragment(it) }.toTypedArray()
-            val actualFragments = rangeAfterUnset.toTypedArray()
+            val actualFragments = rangeAfterUnset.fragments().toTypedArray()
 
             assertContentEquals(expectedFragments, actualFragments)
         }
@@ -155,7 +155,7 @@ abstract class BaseComplexRangeTests {
     fun iteratorTest() {
         fun testCase(ranges: Array<IntRange>) {
             val complexRange = createComplexRange(ranges)
-            val iterator = complexRange.iterator()
+            val iterator = complexRange.fragments().iterator()
 
             var index = 0
             while (iterator.hasNext()) {

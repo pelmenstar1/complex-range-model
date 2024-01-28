@@ -77,7 +77,7 @@ class GenericComplexRangeBuilderTests {
         val actual = IntComplexRange(fragmentRanges)
 
         val expectedFragments = expected.map { IntRangeFragment(it) }.toTypedArray()
-        val actualFragments = actual.toTypedArray()
+        val actualFragments = actual.fragments().toTypedArray()
 
         assertContentEquals(expectedFragments, actualFragments)
     }

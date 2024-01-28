@@ -1,6 +1,8 @@
 package com.github.pelmenstar1.complexRangeModel
 
-class RawLinkedList<T> : MutableCollection<T> {
+import java.util.*
+
+class RawLinkedList<T> : MutableList<T> {
     class Node<T>(var value: T) {
         var previous: Node<T>? = null
         var next: Node<T>? = null
@@ -34,14 +36,14 @@ class RawLinkedList<T> : MutableCollection<T> {
         _size = 1
     }
 
-    private constructor(head: Node<T>, tail: Node<T>, size: Int) {
+    private constructor(head: Node<T>?, tail: Node<T>?, size: Int) {
         _head = head
         _tail = tail
         _size = size
     }
 
     override fun isEmpty(): Boolean {
-        return head == null
+        return _head == null
     }
 
     inline fun forEachNodeStartingWith(startNode: Node<T>?, action: (node: Node<T>) -> Unit) {
@@ -56,7 +58,7 @@ class RawLinkedList<T> : MutableCollection<T> {
         forEachNodeStartingWith(head, action)
     }
 
-    inline fun forEach(action: (value: T) -> Unit) {
+    inline fun forEachForward(action: (value: T) -> Unit) {
         forEachNode { action(it.value) }
     }
 
@@ -74,11 +76,23 @@ class RawLinkedList<T> : MutableCollection<T> {
         _size = 0
     }
 
-    operator fun get(index: Int): T {
+    override fun get(index: Int): T {
         return getNode(index).value
     }
 
+    override fun set(index: Int, element: T): T {
+        val node = getNode(index)
+        val previousValue = node.value
+        node.value = element
+
+        return previousValue
+    }
+
     fun getNode(index: Int): Node<T> {
+        return getNodeOrNull(index) ?: throw IndexOutOfBoundsException()
+    }
+
+    fun getNodeOrNull(index: Int): Node<T>? {
         var count = 0
         var current = head
 
@@ -91,11 +105,7 @@ class RawLinkedList<T> : MutableCollection<T> {
             current = current.next
         }
 
-        throw IndexOutOfBoundsException()
-    }
-
-    override fun contains(element: T): Boolean {
-        return findFirstNode(element) != null
+        return null
     }
 
     inline fun findFirstNode(predicate: (value: T) -> Boolean): Node<T>? {
@@ -122,14 +132,39 @@ class RawLinkedList<T> : MutableCollection<T> {
         return findFirstNode { it == value }
     }
 
+    override fun contains(element: T): Boolean {
+        return findFirstNode(element) != null
+    }
+
     override fun containsAll(elements: Collection<T>): Boolean {
         return elements.all { contains(it) }
     }
 
-    override fun addAll(elements: Collection<T>): Boolean {
-        elements.forEach { add(it) }
+    override fun indexOf(element: T): Int {
+        var index = 0
+        forEachForward {
+            if (it == element) {
+                return index
+            }
 
-        return elements.isNotEmpty()
+            index++
+        }
+
+        return -1
+    }
+
+    override fun lastIndexOf(element: T): Int {
+        var index = _size - 1
+
+        forEachNodeReversed { node ->
+            if (node.value == element) {
+                return index
+            }
+
+            index--
+        }
+
+        return -1
     }
 
     override fun add(element: T): Boolean {
@@ -151,6 +186,28 @@ class RawLinkedList<T> : MutableCollection<T> {
         return true
     }
 
+    override fun add(index: Int, element: T) {
+        val node = getNode(index)
+
+        insertAfterNode(element, node)
+    }
+
+    override fun addAll(index: Int, elements: Collection<T>): Boolean {
+        var lastNode = getNode(index)
+
+        elements.forEach { value ->
+            lastNode = insertAfterNode(value, lastNode)
+        }
+
+        return elements.isNotEmpty()
+    }
+
+    override fun addAll(elements: Collection<T>): Boolean {
+        elements.forEach { add(it) }
+
+        return elements.isNotEmpty()
+    }
+
     fun insertBeforeHead(element: T) {
         val node = Node(element)
         val h = head
@@ -166,7 +223,27 @@ class RawLinkedList<T> : MutableCollection<T> {
         _size++
     }
 
-    fun insertAfterNode(element: T, node: Node<T>) {
+    fun insertBeforeNode(element: T, node: Node<T>): Node<T> {
+        val newNode = Node(element)
+
+        val prevNode = node.previous
+
+        newNode.next = node
+        node.previous = newNode
+
+        newNode.previous = prevNode
+        prevNode?.next = newNode
+
+        if (node === _head) {
+            _head = node
+        }
+
+        _size++
+
+        return newNode
+    }
+
+    fun insertAfterNode(element: T, node: Node<T>): Node<T> {
         val nextNode = node.next
         val newNode = Node(element)
 
@@ -181,6 +258,8 @@ class RawLinkedList<T> : MutableCollection<T> {
         }
 
         _size++
+
+        return newNode
     }
 
     override fun retainAll(elements: Collection<T>): Boolean {
@@ -250,6 +329,13 @@ class RawLinkedList<T> : MutableCollection<T> {
         }
     }
 
+    override fun removeAt(index: Int): T {
+        val node = getNode(index)
+        removeNode(node)
+
+        return node.value
+    }
+
     fun copyOf(): RawLinkedList<T> {
         val currentHead = head ?: return RawLinkedList()
 
@@ -270,7 +356,7 @@ class RawLinkedList<T> : MutableCollection<T> {
 
     fun toArray(output: Array<in T>) {
         var index = 0
-        forEach { output[index++] = it }
+        forEachForward { output[index++] = it }
     }
 
     override fun equals(other: Any?): Boolean {
@@ -299,7 +385,7 @@ class RawLinkedList<T> : MutableCollection<T> {
 
     override fun hashCode(): Int {
         var result = 1
-        forEach { result = result * 31 + it.hashCode() }
+        forEachForward { result = result * 31 + it.hashCode() }
 
         return result
     }
@@ -309,7 +395,7 @@ class RawLinkedList<T> : MutableCollection<T> {
         sb.append("RangeFragmentList(")
         var isFirst = true
 
-        forEach {
+        forEachForward {
             if (!isFirst) {
                 sb.append(", ")
             }
@@ -323,18 +409,26 @@ class RawLinkedList<T> : MutableCollection<T> {
         return sb.toString()
     }
 
-    override fun iterator(): MutableIterator<T> {
-        return IteratorImpl(this)
+    override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> {
+        val startNode = getNode(fromIndex)
+        val endNode = getNode(toIndex - 1)
+        val newSize = toIndex - fromIndex
+
+        return RawLinkedList(startNode, endNode, newSize)
     }
 
-    fun twoWayIterator(): TwoWayIterator<T> {
-        val h = head
+    override fun iterator(): MutableIterator<T> = listIterator()
 
-        return if (h == null) TwoWayIterator.empty() else TwoWayIteratorImpl(h, tail!!, _size)
+    override fun listIterator(): MutableListIterator<T> {
+        return ListIteratorImpl(_head)
+    }
+
+    override fun listIterator(index: Int): MutableListIterator<T> {
+        return ListIteratorImpl(getNode(index))
     }
 
     companion object {
-        private fun<T> countBetweenNodes(start: Node<T>, end: Node<T>): Int {
+        private fun <T> countBetweenNodes(start: Node<T>, end: Node<T>): Int {
             var count = 0
             var current: Node<T>? = start
 
@@ -351,44 +445,15 @@ class RawLinkedList<T> : MutableCollection<T> {
         }
     }
 
-    private class IteratorImpl<T>(
-        private val list: RawLinkedList<T>
-    ) : MutableIterator<T> {
-        private var previousNode: Node<T>? = null
-        private var currentNode: Node<T>? = list.head
-
-        override fun hasNext(): Boolean {
-            return currentNode != null
-        }
-
-        override fun next(): T {
-            val curNode = currentNode ?: throw IllegalStateException("Iterator is already empty")
-
-            previousNode = curNode
-            currentNode = curNode.next
-
-            return curNode.value
-        }
-
-        override fun remove() {
-            previousNode?.also { list.removeNode(it) }
-        }
-    }
-
-    private class TwoWayIteratorImpl<T>(
-        startNode: Node<T>,
-        private val endNode: Node<T>,
-        override val size: Int
-    ) : TwoWayIterator<T> {
+    private inner class ListIteratorImpl(
+        startNode: Node<T>?
+    ) : MutableListIterator<T> {
         private var lastReturnedNode: Node<T>? = null
         private var nextNode: Node<T>? = startNode
         private var nextIndex = 0
 
-        private var markedNode: Node<T>? = null
-        private var markedNodeIndex = -1
-
         override fun hasNext(): Boolean {
-            return nextNode !== endNode.next
+            return nextNode != null
         }
 
         override fun hasPrevious(): Boolean {
@@ -396,10 +461,7 @@ class RawLinkedList<T> : MutableCollection<T> {
         }
 
         override fun next(): T {
-            val nn = nextNode
-            if (nn == null || nn === endNode.next) {
-                throw NoSuchElementException()
-            }
+            val nn = nextNode ?: throw NoSuchElementException()
 
             lastReturnedNode = nn
             nextNode = nn.next
@@ -410,7 +472,7 @@ class RawLinkedList<T> : MutableCollection<T> {
 
         override fun previous(): T {
             val nn = nextNode
-            val l = if (nn == null) endNode else nn.previous
+            val l = if (nn == null) _tail else nn.previous
 
             if (l == null) {
                 throw NoSuchElementException()
@@ -426,39 +488,47 @@ class RawLinkedList<T> : MutableCollection<T> {
         override fun nextIndex(): Int = nextIndex
         override fun previousIndex(): Int = nextIndex - 1
 
-        override fun mark() {
-            markedNode = nextNode
-            markedNodeIndex = nextIndex
-        }
+        override fun add(element: T) {
+            lastReturnedNode = null
 
-        override fun fillArray(array: Array<in T>) {
-            var currentNode = nextNode
-
-            for (i in array.indices) {
-                if (currentNode == null) {
-                    throw NoSuchElementException()
-                }
-
-                array[i] = currentNode.value
-                currentNode = currentNode.next
+            val next = nextNode
+            if (next == null) {
+                this@RawLinkedList.add(element)
+            } else {
+                insertBeforeNode(element, next)
             }
 
-            lastReturnedNode = currentNode
-            nextNode = currentNode
+            nextIndex++
         }
 
-        override fun subIterator(): TwoWayIterator<T> {
-            val startNode = markedNode ?: throw IllegalStateException("No element is marked")
-            val endNode = lastReturnedNode ?: endNode
-            val subSize = nextIndex - markedNodeIndex
+        override fun remove() {
+            val lastReturned = lastReturnedNode
 
-            return TwoWayIteratorImpl(startNode, endNode, subSize)
+            checkNotNull(lastReturned)
+
+            val lastNext = lastReturned.next
+            removeNode(lastReturned)
+
+            if (nextNode === lastReturned) {
+                nextNode = lastNext
+            } else {
+                nextIndex--
+            }
+
+            lastReturnedNode = null
+        }
+
+        override fun set(element: T) {
+            val lastReturned = lastReturnedNode
+            checkNotNull(lastReturned)
+
+            lastReturned.value = element
         }
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-inline fun<reified T> RawLinkedList<T>.toArray(): Array<T> {
+inline fun <reified T> RawLinkedList<T>.toArray(): Array<T> {
     val arr = arrayOfNulls<T>(size)
     toArray(arr)
 

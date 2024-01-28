@@ -238,19 +238,19 @@ class ComplexRangeTransitionManagerTests {
 
     @Test
     fun consumeElementsForTransformGroupTest() {
-        fun createIterator(ranges: Array<IntRange>): TwoWayIterator<RangeFragment<IntFragmentElement>> {
+        fun createIterator(ranges: Array<IntRange>): ListIterator<RangeFragment<IntFragmentElement>> {
             val list = RawLinkedList<RangeFragment<IntFragmentElement>>()
 
             for (i in 1 until ranges.size) {
                 list.add(IntRangeFragment(ranges[i]))
             }
 
-            return list.twoWayIterator()
+            return list.listIterator()
         }
 
         fun assertConsumed(
             expectedConsumed: Int,
-            iter: TwoWayIterator<RangeFragment<IntFragmentElement>>,
+            iter: ListIterator<RangeFragment<IntFragmentElement>>,
             input: Array<IntRange>,
             groupFrags: RawLinkedList<RangeFragment<IntFragmentElement>>,
             sourceType: String, testType: String
