@@ -5,8 +5,6 @@ import com.github.pelmenstar1.complexRangeModel.*
 class GenericComplexRange<T : FragmentElement<T>> internal constructor(
     private val fragments: RawLinkedList<RangeFragment<T>>
 ) : ComplexRange<T> {
-    private var elements: ArrayList<T>? = null
-
     override fun modify(block: ComplexRangeModify<T>.() -> Unit): ComplexRange<T> {
         val copied = fragments.copyOf()
         GenericComplexRangeModify(copied).also(block)
@@ -16,27 +14,6 @@ class GenericComplexRange<T : FragmentElement<T>> internal constructor(
 
     override fun fragments(): List<RangeFragment<T>> {
         return fragments
-    }
-
-    override fun elements(): List<T> {
-        var result = elements
-        if (result == null) {
-            result = createElements()
-            elements = result
-        }
-
-        return result
-    }
-
-    private fun createElements(): ArrayList<T> {
-        val list = ArrayList<T>()
-        fragments.forEachForward { fragment ->
-            fragment.forEachElement { element ->
-                list.add(element)
-            }
-        }
-
-        return list
     }
 
     override fun equals(other: Any?): Boolean {

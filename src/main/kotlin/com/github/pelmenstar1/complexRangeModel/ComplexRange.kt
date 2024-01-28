@@ -6,7 +6,10 @@ interface ComplexRange<T : FragmentElement<T>> {
     fun modify(block: ComplexRangeModify<T>.() -> Unit): ComplexRange<T>
 
     fun fragments(): List<RangeFragment<T>>
-    fun elements(): List<T>
+
+    fun elements(): Collection<T> {
+        return ComplexRangeElementCollection(fragments())
+    }
 
     companion object {
         fun <T : FragmentElement<T>> empty(): ComplexRange<T> = GenericComplexRange.empty()

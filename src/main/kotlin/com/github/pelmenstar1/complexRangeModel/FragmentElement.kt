@@ -5,6 +5,8 @@ import kotlin.math.abs
 interface FragmentElement<T : FragmentElement<T>> : Comparable<T> {
     fun previous(): T
     fun next(): T
+
+    fun countElementsTo(other: T): Int
 }
 
 interface DistanceFragmentElement<T : FragmentElement<T>, in D> : FragmentElement<T> {
@@ -21,6 +23,10 @@ data class IntFragmentElement(val value: Int) : DistanceFragmentElement<IntFragm
 
     override fun isDistanceLessThanOrEqual(other: IntFragmentElement, maxDistance: Int): Boolean {
         return abs(value - other.value) <= maxDistance
+    }
+
+    override fun countElementsTo(other: IntFragmentElement): Int {
+        return other.value - value
     }
 
     override fun toString(): String = value.toString()

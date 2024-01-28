@@ -7,6 +7,9 @@ class RangeFragment<T : FragmentElement<T>>(
     val endExclusive: T
         get() = endInclusive.next()
 
+    val elementCount: Int
+        get() = start.countElementsTo(endInclusive) + 1
+
     init {
         require(start <= endInclusive) { "Invalid range parameters" }
     }
