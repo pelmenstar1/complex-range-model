@@ -5,8 +5,13 @@ import com.github.pelmenstar1.complexRangeModel.RangeFragment
 
 sealed interface TransitionOperation<T : FragmentElement<T>> {
     fun reversed(): TransitionOperation<T>
+    fun efficiencyLevel(): Int
 
     sealed class StructuralOperation<T : FragmentElement<T>>(val fragment: RangeFragment<T>) : TransitionOperation<T> {
+        override fun efficiencyLevel(): Int {
+            return fragment.elementCount
+        }
+
         override fun equals(other: Any?): Boolean {
             if (other === this) return true
             if (other == null || javaClass != other.javaClass) return false
@@ -44,6 +49,11 @@ sealed interface TransitionOperation<T : FragmentElement<T>> {
             }
         }
 
+        override fun efficiencyLevel(): Int {
+            return origin.start.countElementsToAbsolute(destination.start) +
+                    origin.endInclusive.countElementsToAbsolute(destination.endInclusive)
+        }
+
         override fun reversed(): TransitionOperation<T> = Transform(destination, origin)
     }
 
@@ -60,6 +70,10 @@ sealed interface TransitionOperation<T : FragmentElement<T>> {
             }
         }
 
+        override fun efficiencyLevel(): Int {
+            return origin.start.countElementsToAbsolute(destination.start)
+        }
+
         override fun reversed(): TransitionOperation<T> = Move(destination, origin)
     }
 
@@ -68,6 +82,13 @@ sealed interface TransitionOperation<T : FragmentElement<T>> {
         val destinations: Array<RangeFragment<T>>
     ) : TransitionOperation<T> {
         override fun reversed(): TransitionOperation<T> = Join(destinations, origin)
+
+        override fun efficiencyLevel(): Int {
+            val destElementCount = destinations.sumOf { it.elementCount }
+
+            // destElementCount must be lesser than origin.elementCount
+            return origin.elementCount - destElementCount
+        }
 
         override fun equals(other: Any?): Boolean {
             return other is Split<*> && origin == other.origin && destinations.contentEquals(other.destinations)
@@ -87,6 +108,13 @@ sealed interface TransitionOperation<T : FragmentElement<T>> {
         val destination: RangeFragment<T>
     ) : TransitionOperation<T> {
         override fun reversed(): TransitionOperation<T> = Split(destination, origins)
+
+        override fun efficiencyLevel(): Int {
+            val originElementCount = origins.sumOf { it.elementCount }
+
+            // originElementCount must be lesser than destination.elementCount
+            return destination.elementCount - originElementCount
+        }
 
         override fun equals(other: Any?): Boolean {
             return other is Join<*> && origins.contentEquals(other.origins) && destination == other.destination

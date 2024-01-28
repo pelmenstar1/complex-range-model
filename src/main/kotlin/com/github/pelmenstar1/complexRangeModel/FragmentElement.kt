@@ -7,6 +7,15 @@ interface FragmentElement<T : FragmentElement<T>> : Comparable<T> {
     fun next(): T
 
     fun countElementsTo(other: T): Int
+
+    @Suppress("UNCHECKED_CAST")
+    fun countElementsToAbsolute(other: T): Int {
+        return if (this <= other) {
+            countElementsTo(other)
+        } else {
+            other.countElementsTo(this as T)
+        }
+    }
 }
 
 interface DistanceFragmentElement<T : FragmentElement<T>, in D> : FragmentElement<T> {
@@ -27,6 +36,10 @@ data class IntFragmentElement(val value: Int) : DistanceFragmentElement<IntFragm
 
     override fun countElementsTo(other: IntFragmentElement): Int {
         return other.value - value
+    }
+
+    override fun countElementsToAbsolute(other: IntFragmentElement): Int {
+        return abs(other.value - value)
     }
 
     override fun toString(): String = value.toString()

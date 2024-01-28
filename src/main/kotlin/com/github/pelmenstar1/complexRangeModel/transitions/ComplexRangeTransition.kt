@@ -6,6 +6,7 @@ interface ComplexRangeTransition<T : FragmentElement<T>> {
     fun groups(): Set<TransitionGroup<T>>
 
     fun reversed(): ComplexRangeTransition<T>
+    fun efficiencyLevel(): Int
 
     companion object {
         fun <T : FragmentElement<T>> create(groups: List<TransitionGroup<T>>): ComplexRangeTransition<T> {
@@ -30,6 +31,10 @@ private class SetComplexRangeTransition<T : FragmentElement<T>>(
         }
 
         return SetComplexRangeTransition(revGroups)
+    }
+
+    override fun efficiencyLevel(): Int {
+        return groups.sumOf { it.efficiencyLevel() }
     }
 
     override fun equals(other: Any?): Boolean {

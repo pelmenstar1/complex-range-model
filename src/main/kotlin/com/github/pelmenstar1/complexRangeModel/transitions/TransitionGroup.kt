@@ -5,6 +5,7 @@ import com.github.pelmenstar1.complexRangeModel.sequenceEquals
 
 interface TransitionGroup<T : FragmentElement<T>> {
     fun operations(): Collection<TransitionOperation<T>>
+    fun efficiencyLevel(): Int
     fun reversed(): TransitionGroup<T>
 
     companion object {
@@ -30,6 +31,8 @@ private object EmptyTransitionGroup : TransitionGroup<Nothing> {
 
     override fun operations(): Collection<TransitionOperation<Nothing>> = emptyList()
 
+    override fun efficiencyLevel(): Int = 0
+
     override fun equals(other: Any?): Boolean {
         return other is TransitionGroup<*> && other.operations().isEmpty()
     }
@@ -54,6 +57,10 @@ private class CollectionTransitionGroup<T : FragmentElement<T>>(
         }
 
         return CollectionTransitionGroup(revOps)
+    }
+
+    override fun efficiencyLevel(): Int {
+        return ops.sumOf { it.efficiencyLevel() }
     }
 
     override fun operations(): Collection<TransitionOperation<T>> = ops
