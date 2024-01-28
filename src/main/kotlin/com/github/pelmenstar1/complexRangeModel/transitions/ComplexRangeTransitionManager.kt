@@ -45,7 +45,7 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
                     groups.add(createTransformGroup(originGroupFrags, destGroupsFrags))
                 } else {
                     if (proxDetector.canMove(originFrag, destFrag)) {
-                        groups.add(TransitionGroup.create(TransitionOperation.Transform(originFrag, destFrag)))
+                        groups.add(TransitionGroup.create(TransitionOperation.Move(originFrag, destFrag)))
                     } else {
                         groups.add(TransitionGroup.create(TransitionOperation.Remove(originFrag)))
                         groups.add(TransitionGroup.create(TransitionOperation.Insert(destFrag)))

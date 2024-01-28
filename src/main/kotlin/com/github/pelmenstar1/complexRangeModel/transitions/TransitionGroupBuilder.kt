@@ -17,6 +17,10 @@ class TransitionGroupBuilder<T : FragmentElement<T>> {
         ops.add(TransitionOperation.Transform(origin, destination))
     }
 
+    fun move(origin: RangeFragment<T>, destination: RangeFragment<T>) {
+        ops.add(TransitionOperation.Move(origin, destination))
+    }
+
     fun split(origin: RangeFragment<T>, destinations: Array<RangeFragment<T>>) {
         ops.add(TransitionOperation.Split(origin, destinations))
     }
@@ -46,4 +50,8 @@ fun TransitionGroupBuilder<IntFragmentElement>.split(originRange: IntRange, dest
 
 fun TransitionGroupBuilder<IntFragmentElement>.transform(origin: IntRange, dest: IntRange){
     transform(IntRangeFragment(origin), IntRangeFragment(dest))
+}
+
+fun TransitionGroupBuilder<IntFragmentElement>.move(origin: IntRange, dest: IntRange){
+    move(IntRangeFragment(origin), IntRangeFragment(dest))
 }

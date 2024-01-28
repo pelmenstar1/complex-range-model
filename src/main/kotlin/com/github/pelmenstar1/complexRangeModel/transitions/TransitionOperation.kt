@@ -35,7 +35,32 @@ sealed interface TransitionOperation<T : FragmentElement<T>> {
         val origin: RangeFragment<T>,
         val destination: RangeFragment<T>
     ) : TransitionOperation<T> {
+        init {
+            require(origin != destination) {
+                "Origin fragment should not be the same as destination fragment"
+            }
+            require(origin.overlapsWith(destination)) {
+                "Origin fragment should overlap with destination fragment"
+            }
+        }
+
         override fun reversed(): TransitionOperation<T> = Transform(destination, origin)
+    }
+
+    data class Move<T : FragmentElement<T>>(
+        val origin: RangeFragment<T>,
+        val destination: RangeFragment<T>
+    ) : TransitionOperation<T> {
+        init {
+            require(origin != destination) {
+                "Origin fragment should not be the same as destination fragment"
+            }
+            require(origin.elementCount == destination.elementCount) {
+                "Origin fragment should have same length as destination fragment"
+            }
+        }
+
+        override fun reversed(): TransitionOperation<T> = Move(destination, origin)
     }
 
     class Split<T : FragmentElement<T>>(

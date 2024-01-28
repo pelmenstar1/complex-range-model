@@ -177,7 +177,7 @@ class ComplexRangeTransitionManagerTests {
             maxMoveDist = 1
         ) {
             group {
-                transform(origin = 1..2, dest = 3..4)
+                move(origin = 1..2, dest = 3..4)
             }
         }
 
