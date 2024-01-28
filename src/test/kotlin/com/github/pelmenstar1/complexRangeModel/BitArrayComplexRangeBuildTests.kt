@@ -31,7 +31,7 @@ class BitArrayComplexRangeBuildTests {
         testCase(limitRange = 4..5, range = 6..7)
     }
 
-    private fun createComplexRange(limitRange: IntRange, ranges: Array<IntRange>): ComplexRange<IntFragmentElement> {
+    private fun createComplexRange(limitRange: IntRange, ranges: Array<IntRange>): IntComplexRange {
         return BitIntComplexRange(limitRange.first, limitRange.last) {
             ranges.forEach { fragment(it) }
         }

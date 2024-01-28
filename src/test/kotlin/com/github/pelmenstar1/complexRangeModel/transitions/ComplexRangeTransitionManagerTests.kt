@@ -238,8 +238,8 @@ class ComplexRangeTransitionManagerTests {
 
     @Test
     fun consumeElementsForTransformGroupTest() {
-        fun createIterator(ranges: Array<IntRange>): ListIterator<RangeFragment<IntFragmentElement>> {
-            val list = RawLinkedList<RangeFragment<IntFragmentElement>>()
+        fun createIterator(ranges: Array<IntRange>): ListIterator<IntRangeFragment> {
+            val list = RawLinkedList<IntRangeFragment>()
 
             for (i in 1 until ranges.size) {
                 list.add(IntRangeFragment(ranges[i]))
@@ -250,9 +250,9 @@ class ComplexRangeTransitionManagerTests {
 
         fun assertConsumed(
             expectedConsumed: Int,
-            iter: ListIterator<RangeFragment<IntFragmentElement>>,
+            iter: ListIterator<IntRangeFragment>,
             input: Array<IntRange>,
-            groupFrags: RawLinkedList<RangeFragment<IntFragmentElement>>,
+            groupFrags: RawLinkedList<IntRangeFragment>,
             sourceType: String, testType: String
         ) {
             val resultGroupElements = groupFrags.toTypedArray()
@@ -364,8 +364,8 @@ class ComplexRangeTransitionManagerTests {
     }
 
     private fun createTransition(
-        origin: ComplexRange<IntFragmentElement>,
-        dest: ComplexRange<IntFragmentElement>,
+        origin: IntComplexRange,
+        dest: IntComplexRange,
         maxMoveDist: Int = -1
     ): ComplexRangeTransition<IntFragmentElement> {
         return ComplexRangeTransitionManager.intWithMoveDistance(maxMoveDist).createTransition(origin, dest)

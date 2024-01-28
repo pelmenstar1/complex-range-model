@@ -20,6 +20,8 @@ interface ComplexRange<T : FragmentElement<T>> {
     }
 }
 
+typealias IntComplexRange = ComplexRange<IntFragmentElement>
+
 private object EmptyComplexRange : ComplexRange<Nothing> {
     override fun modify(block: ComplexRangeModify<Nothing>.() -> Unit): ComplexRange<Nothing> {
         val fragments = RawLinkedList<RangeFragment<Nothing>>()
@@ -52,15 +54,15 @@ inline fun BitIntComplexRange(
     limitStart: Int,
     limitEnd: Int,
     block: ComplexRangeBuilder<IntFragmentElement>.() -> Unit
-): ComplexRange<IntFragmentElement> {
+): IntComplexRange {
     return BitArrayComplexRangeBuilder(limitStart, limitEnd).also(block).build()
 }
 
-inline fun IntComplexRange(block: ComplexRangeBuilder<IntFragmentElement>.() -> Unit): ComplexRange<IntFragmentElement> {
+inline fun IntComplexRange(block: ComplexRangeBuilder<IntFragmentElement>.() -> Unit): IntComplexRange {
     return ComplexRange(block)
 }
 
-fun IntComplexRange(ranges: Array<out IntRange>): ComplexRange<IntFragmentElement> {
+fun IntComplexRange(ranges: Array<out IntRange>): IntComplexRange {
     return IntComplexRange {
         ranges.forEach { fragment(it) }
     }

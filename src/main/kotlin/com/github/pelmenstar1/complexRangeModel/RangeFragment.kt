@@ -106,6 +106,8 @@ class RangeFragment<T : FragmentElement<T>>(
     }
 }
 
+typealias IntRangeFragment = RangeFragment<IntFragmentElement>
+
 fun<T : DistanceFragmentElement<T, D>, D> RangeFragment<T>.isDistanceLessThanOrEqual(
     other: RangeFragment<T>,
     maxDist: D
@@ -129,19 +131,15 @@ fun interface RangeFragmentFactory<T : FragmentElement<T>> {
 }
 
 object IntRangeFragmentFactory : RangeFragmentFactory<IntFragmentElement> {
-    override fun create(start: IntFragmentElement, endInclusive: IntFragmentElement): RangeFragment<IntFragmentElement> {
+    override fun create(start: IntFragmentElement, endInclusive: IntFragmentElement): IntRangeFragment {
         return IntRangeFragment(start, endInclusive)
     }
 }
 
-fun IntRangeFragment(start: IntFragmentElement, endInclusive: IntFragmentElement): RangeFragment<IntFragmentElement> {
-    return RangeFragment(start, endInclusive)
-}
-
-fun IntRangeFragment(start: Int, endInclusive: Int): RangeFragment<IntFragmentElement> {
+fun IntRangeFragment(start: Int, endInclusive: Int): IntRangeFragment {
     return IntRangeFragment(IntFragmentElement(start), IntFragmentElement(endInclusive))
 }
 
-fun IntRangeFragment(range: IntRange): RangeFragment<IntFragmentElement> {
+fun IntRangeFragment(range: IntRange): IntRangeFragment {
     return IntRangeFragment(range.first, range.last)
 }

@@ -5,8 +5,6 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-private typealias IntFragmentBiPredicate = (RangeFragment<IntFragmentElement>, RangeFragment<IntFragmentElement>) -> Boolean
-
 class RangeFragmentTests {
     @Test
     fun constructorThrowsOnInvalidArgsTest() {
@@ -16,7 +14,7 @@ class RangeFragmentTests {
     private fun predicateMemberTestHelper(
         r1: IntRange, r2: IntRange,
         expected: Boolean,
-        predicate: IntFragmentBiPredicate,
+        predicate: (IntRangeFragment, IntRangeFragment) -> Boolean,
     ) {
         val actualResult = predicate(IntRangeFragment(r1), IntRangeFragment(r2))
         assertEquals(expected, actualResult)
@@ -25,7 +23,7 @@ class RangeFragmentTests {
     private fun commutativePredicateMemberTestHelper(
         r1: IntRange, r2: IntRange,
         expected: Boolean,
-        predicate: IntFragmentBiPredicate,
+        predicate: (IntRangeFragment, IntRangeFragment) -> Boolean,
     ) {
         predicateMemberTestHelper(r1, r2, expected, predicate)
         predicateMemberTestHelper(r2, r1, expected, predicate)
@@ -34,7 +32,7 @@ class RangeFragmentTests {
     @Test
     fun canUniteWithTest() {
         fun testHelper(r1: IntRange, r2: IntRange, expected: Boolean) {
-           commutativePredicateMemberTestHelper(r1, r2, expected, RangeFragment<IntFragmentElement>::canUniteWith)
+           commutativePredicateMemberTestHelper(r1, r2, expected, IntRangeFragment::canUniteWith)
         }
 
         testHelper(1..2, 2..3, expected = true)
@@ -46,7 +44,7 @@ class RangeFragmentTests {
     @Test
     fun overlapsTest() {
         fun testHelper(r1: IntRange, r2: IntRange, expected: Boolean) {
-            commutativePredicateMemberTestHelper(r1, r2, expected, RangeFragment<IntFragmentElement>::overlapsWith)
+            commutativePredicateMemberTestHelper(r1, r2, expected, IntRangeFragment::overlapsWith)
         }
 
         testHelper(1..2, 2..3, expected = true)
@@ -59,7 +57,7 @@ class RangeFragmentTests {
     @Test
     fun containsExclusiveTest() {
         fun testHelper(base: IntRange, needle: IntRange, expected: Boolean) {
-            predicateMemberTestHelper(base, needle, expected, RangeFragment<IntFragmentElement>::containsExclusive)
+            predicateMemberTestHelper(base, needle, expected, IntRangeFragment::containsExclusive)
         }
 
         testHelper(base = 1..5, needle = 2..2, expected = true)
@@ -73,7 +71,7 @@ class RangeFragmentTests {
     @Test
     fun containsCompletelyTest() {
         fun testHelper(base: IntRange, needle: IntRange, expected: Boolean) {
-            predicateMemberTestHelper(base, needle, expected, RangeFragment<IntFragmentElement>::containsCompletely)
+            predicateMemberTestHelper(base, needle, expected, IntRangeFragment::containsCompletely)
         }
 
         testHelper(base = 1..5, needle = 2..2, expected = true)
@@ -87,7 +85,7 @@ class RangeFragmentTests {
     @Test
     fun leftContainsTest() {
         fun testHelper(base: IntRange, needle: IntRange, expected: Boolean) {
-            predicateMemberTestHelper(base, needle, expected, RangeFragment<IntFragmentElement>::leftContains)
+            predicateMemberTestHelper(base, needle, expected, IntRangeFragment::leftContains)
         }
 
         testHelper(base = 1..5, needle = 1..5, expected = true)
