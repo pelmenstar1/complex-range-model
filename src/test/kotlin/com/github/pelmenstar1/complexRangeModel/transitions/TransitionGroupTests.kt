@@ -12,8 +12,8 @@ class TransitionGroupTests {
     fun emptyTest() {
         val group = TransitionGroup.empty<IntFragmentElement>()
 
-        assertTrue(group.isEmpty())
-        assertEquals(0, group.size)
+        assertTrue(group.operations().isEmpty())
+        assertEquals(0, group.operations().size)
 
         val groupToString = group.toString()
         assertEquals("TransitionGroup()", groupToString)
@@ -36,10 +36,10 @@ class TransitionGroupTests {
 
         val group = TransitionGroup.create(TransitionOperation.Insert(frag))
 
-        assertFalse(group.isEmpty())
-        assertEquals(1, group.size)
-        assertTrue(group.contains(TransitionOperation.Insert(frag)))
-        assertFalse(group.contains(TransitionOperation.Insert(otherFrag)))
+        assertFalse(group.operations().isEmpty())
+        assertEquals(1, group.operations().size)
+        assertTrue(group.operations().contains(TransitionOperation.Insert(frag)))
+        assertFalse(group.operations().contains(TransitionOperation.Insert(otherFrag)))
 
         val groupToString = group.toString()
         assertEquals("TransitionGroup(TransitionOperation.Insert(fragment=[1, 2]))", groupToString)
@@ -64,11 +64,11 @@ class TransitionGroupTests {
         val ops = listOf(op1, op2)
 
         val group = TransitionGroup.create(ops)
-        assertFalse(group.isEmpty())
-        assertEquals(2, group.size)
-        assertTrue(group.contains(op1))
-        assertTrue(group.contains(op2))
-        assertFalse(group.contains(op3))
+        assertFalse(group.operations().isEmpty())
+        assertEquals(2, group.operations().size)
+        assertTrue(group.operations().contains(op1))
+        assertTrue(group.operations().contains(op2))
+        assertFalse(group.operations().contains(op3))
 
         val groupToString = group.toString()
         assertEquals("TransitionGroup(TransitionOperation.Insert(fragment=[1, 2]), TransitionOperation.Insert(fragment=[2, 3]))", groupToString)
