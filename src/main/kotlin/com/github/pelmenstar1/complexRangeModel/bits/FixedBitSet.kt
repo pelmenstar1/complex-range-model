@@ -72,19 +72,24 @@ internal class FixedBitSet {
         }
     }
 
-    fun findNextSetBitRange(startIndex: Int): PackedIntRange {
-        val rangeStart = findNextSetBitIndex(startIndex)
-        if (rangeStart < 0) {
-            return PackedIntRange.Empty
-        }
+    inline fun forEachRange(block: (start: Int, endInclusive: Int) -> Unit) {
+        var start = 0
 
-        var rangeEnd = findNextUnsetBitIndex(rangeStart)
-        if (rangeEnd < 0) {
-            rangeEnd = words.size * WORD_BIT_COUNT
-        }
-        rangeEnd--
+        while(true) {
+            val rangeStart = findNextSetBitIndex(start)
+            if (rangeStart < 0) {
+                break
+            }
 
-        return PackedIntRange(rangeStart, rangeEnd)
+            var rangeEnd = findNextUnsetBitIndex(rangeStart)
+            if (rangeEnd < 0) {
+                rangeEnd = words.size * WORD_BIT_COUNT
+            }
+            rangeEnd--
+
+            start = rangeEnd + 1
+            block(rangeStart, rangeEnd)
+        }
     }
 
     override fun equals(other: Any?): Boolean {
