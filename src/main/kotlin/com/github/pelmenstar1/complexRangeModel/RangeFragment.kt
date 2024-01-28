@@ -26,19 +26,6 @@ class RangeFragment<T : FragmentElement<T>>(
         return withEnd(value.previous())
     }
 
-    inline fun forEachElement(block: (T) -> Unit) {
-        var current = start
-        while (true) {
-            block(current)
-
-            if (current == endInclusive) {
-                break
-            }
-
-            current = current.next()
-        }
-    }
-
     override fun equals(other: Any?): Boolean {
         return other is RangeFragment<*> && start == other.start && endInclusive == other.endInclusive
     }
@@ -96,20 +83,25 @@ class RangeFragment<T : FragmentElement<T>>(
         return endInclusive >= other.endInclusive
     }
 
-    override fun iterator(): Iterator<T> = IteratorImpl(start, endInclusive)
+    override fun iterator(): Iterator<T> = IteratorImpl()
 
-    private class IteratorImpl<T : FragmentElement<T>>(start: T, private val end: T) : Iterator<T> {
-        private var current = start
+    private inner class IteratorImpl : Iterator<T> {
+        private var lastReturned: T? = null
 
         override fun hasNext(): Boolean {
-            return current < end
+            return lastReturned != endInclusive
         }
 
         override fun next(): T {
-            val r = current.next()
-            current = r
+            var lr = lastReturned
+            if (lr == null) {
+                lr = start
+            } else {
+                lr = lr.next()
+            }
 
-            return r
+            lastReturned = lr
+            return lr
         }
     }
 }
