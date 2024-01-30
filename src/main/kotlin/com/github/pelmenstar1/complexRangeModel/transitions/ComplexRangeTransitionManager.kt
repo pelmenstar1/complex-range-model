@@ -2,20 +2,20 @@ package com.github.pelmenstar1.complexRangeModel.transitions
 
 import com.github.pelmenstar1.complexRangeModel.*
 
-private typealias FragmentIterator<T> = ListIterator<RangeFragment<T>>
-private typealias FragmentLinkedList<T> = RawLinkedList<RangeFragment<T>>
+private typealias FragmentIterator<T> = ComplexRangeFragmentListIterator<T>
 
 class ComplexRangeTransitionManager<T : FragmentElement<T>>(
     private val proxDetector: FragmentProximityDetector<T>
 ) {
     fun createTransition(origin: ComplexRange<T>, dest: ComplexRange<T>): ComplexRangeTransition<T> {
         val groups = HashSet<TransitionGroup<T>>()
-        val originIter = origin.fragments().listIterator()
-        val destIter = dest.fragments().listIterator()
+
+        val originIter = origin.fragments().fragmentIterator()
+        val destIter = dest.fragments().fragmentIterator()
 
         while(true) {
-            val originHasNext = originIter.hasNext()
-            val destHasNext = destIter.hasNext()
+            val originHasNext = originIter.moveNext()
+            val destHasNext = destIter.moveNext()
 
             if (!originHasNext || !destHasNext) {
                 if (originHasNext) {
@@ -28,20 +28,20 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
                 break
             }
 
-            val originFrag = originIter.next()
-            val destFrag = destIter.next()
+            originIter.mark()
+            destIter.mark()
+
+            val originFrag = originIter.current
+            val destFrag = destIter.current
 
             if (originFrag != destFrag) {
                 if (originFrag.overlapsWith(destFrag)) {
-                    val originGroupFrags = RawLinkedList(originFrag)
-                    val destGroupsFrags = RawLinkedList(destFrag)
+                    consumeElementsForTransformGroup(originFrag, originIter, destIter)
 
-                    consumeElementsForTransformGroup(
-                        originIter, destIter,
-                        originGroupFrags, destGroupsFrags
-                    )
+                    val originGroupRange = originIter.subRange()
+                    val destGroupRange = destIter.subRange()
 
-                    groups.add(createTransformGroup(originGroupFrags, destGroupsFrags))
+                    groups.add(createTransformGroup(originGroupRange, destGroupRange))
                 } else {
                     if (proxDetector.canMove(originFrag, destFrag)) {
                         groups.add(TransitionGroup.create(TransitionOperation.Move(originFrag, destFrag)))
@@ -69,30 +69,29 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
         groups: MutableSet<TransitionGroup<T>>,
         createOp: (RangeFragment<T>) -> TransitionOperation<T>
     ) {
-        while (iter.hasNext()) {
-            val fragment = iter.next()
+        do {
+            val fragment = iter.current
             val op = createOp(fragment)
 
             groups.add(TransitionGroup.create(op))
-        }
+        } while(iter.moveNext())
     }
 
     // Internal for tests
     internal fun consumeElementsForTransformGroup(
+        firstOriginGroupFrag: RangeFragment<T>,
         originIter: FragmentIterator<T>,
-        destIter: FragmentIterator<T>,
-        originGroupFrags: FragmentLinkedList<T>,
-        destGroupFrags: FragmentLinkedList<T>
+        destIter: FragmentIterator<T>
     ) {
-        while (true) {
-            var lastOriginFrag = originGroupFrags.lastValue
+        var lastOriginFrag = firstOriginGroupFrag
+        var lastDestFrag: RangeFragment<T>
 
-            val nonOverlappingDestFrag = consumeLaneForTransform(lastOriginFrag, destIter, destGroupFrags)
-            val lastDestFrag = destGroupFrags.lastValue
+        while (true) {
+            val nonOverlappingDestFrag = consumeLaneForTransform(lastOriginFrag, destIter)
+            lastDestFrag = destIter.current
 
             if (nonOverlappingDestFrag == null) {
-                consumeLaneForTransform(lastDestFrag, originIter, originGroupFrags)
-
+                consumeLaneForTransform(lastDestFrag, originIter)
                 break
             }
 
@@ -100,22 +99,20 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
                 break
             }
 
-            if (originIter.hasNext()) {
-                val nextOriginFrag = originIter.next()
+            if (originIter.moveNext()) {
+                val nextOriginFrag = originIter.current
 
-                if (nextOriginFrag.overlapsWith(lastDestFrag)) {
-                    originGroupFrags.add(nextOriginFrag)
-                } else {
-                    originIter.previous()
+                if (!nextOriginFrag.overlapsWith(lastDestFrag)) {
+                    originIter.movePrevious()
                     break
                 }
             }
 
-            val nonOverlappingOriginFrag = consumeLaneForTransform(lastDestFrag, originIter, originGroupFrags)
-            lastOriginFrag = originGroupFrags.lastValue
+            val nonOverlappingOriginFrag = consumeLaneForTransform(lastDestFrag, originIter)
+            lastOriginFrag = originIter.current
 
             if (nonOverlappingOriginFrag == null) {
-                consumeLaneForTransform(lastOriginFrag, destIter, destGroupFrags)
+                consumeLaneForTransform(lastOriginFrag, destIter)
 
                 break
             }
@@ -124,88 +121,82 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
                 break
             }
 
-            if (destIter.hasNext()) {
-                val nextDestFrag = destIter.next()
+            if (destIter.moveNext()) {
+                val nextDestFrag = destIter.current
 
-                if (nextDestFrag.overlapsWith(lastOriginFrag)) {
-                    destGroupFrags.add(nextDestFrag)
-                } else {
-                    destIter.previous()
+                if (!nextDestFrag.overlapsWith(lastOriginFrag)) {
+                    destIter.movePrevious()
                     break
                 }
             }
         }
     }
 
-    private fun consumeLaneForTransform(
-        anchorFrag: RangeFragment<T>,
-        iter: FragmentIterator<T>,
-        output: FragmentLinkedList<T>
-    ): RangeFragment<T>? {
-        while (iter.hasNext()) {
-            val frag = iter.next()
+    // Returns the first fragment that doesn't overlap with anchorFrag or equal to anchorFrag.
+    // If there's no such fragment, returns null
+    private fun consumeLaneForTransform(anchorFrag: RangeFragment<T>, iter: FragmentIterator<T>): RangeFragment<T>? {
+        while(iter.moveNext()) {
+            val frag = iter.current
 
             if (frag == anchorFrag || !frag.overlapsWith(anchorFrag)) {
-                iter.previous()
+                iter.movePrevious()
                 return frag
             }
-
-            output.add(frag)
         }
 
         return null
     }
 
     private fun createTransformGroup(
-        originFrags: FragmentLinkedList<T>,
-        destFrags: FragmentLinkedList<T>
+        originGroupRange: ComplexRange<T>,
+        destGroupRange: ComplexRange<T>
     ): TransitionGroup<T> {
         val ops = ArrayList<TransitionOperation<T>>(3)
+
+        val originFrags = originGroupRange.fragments()
+        val destFrags = destGroupRange.fragments()
 
         val originSize = originFrags.size
         val destSize = destFrags.size
 
         if (originSize == 1) {
-            val originFrag = originFrags.firstValue
+            val originFrag = originFrags[0]
 
             if (destSize == 1) {
                 // Ops:
                 // - Transform
+                val destFrag = destFrags[0]
 
-                val destFrag = destFrags.firstValue
                 ops.add(TransitionOperation.Transform(originFrag, destFrag))
             } else {
                 // Ops:
                 // - Transform
                 // - Split
 
-                val destFragsArray = destFrags.toArray()
+                val minFrag = destFrags[0]
+                val maxFrag = destFrags.last()
 
-                val minFrag = destFragsArray[0]
-                val maxFrag = destFragsArray[destSize - 1]
                 val destTransformFrag = RangeFragment(minFrag.start, maxFrag.endInclusive)
 
                 if (originFrag != destTransformFrag) {
                     ops.add(TransitionOperation.Transform(originFrag, destTransformFrag))
                 }
 
-                ops.add(TransitionOperation.Split(destTransformFrag, destFragsArray))
+                ops.add(TransitionOperation.Split(destTransformFrag, destGroupRange))
             }
         } else {
             // originSize > 1
-            val originFragsArray = originFrags.toTypedArray()
-
-            val minOriginFrag = originFragsArray[0]
-            val maxOriginFrag = originFragsArray[originSize - 1]
+            val minOriginFrag = originFrags[0]
+            val maxOriginFrag = originFrags.last()
             val originTransformFrag = RangeFragment(minOriginFrag.start, maxOriginFrag.endInclusive)
 
             if (destSize == 1) {
-                val destFrag = destFrags.firstValue
+                val destFrag = destFrags.first()
 
                 // Ops:
                 // - Join
                 // - Transform? (if joined fragment is not destination fragment)
-                ops.add(TransitionOperation.Join(originFragsArray, originTransformFrag))
+                ops.add(TransitionOperation.Join(originGroupRange, originTransformFrag))
 
                 if (destFrag != originTransformFrag) {
                     ops.add(TransitionOperation.Transform(originTransformFrag, destFrag))
@@ -216,20 +207,18 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
                 // - Transform
                 // - Split
 
-                val destFragsArray = destFrags.toTypedArray()
-
-                val minDestFrag = destFragsArray[0]
-                val maxDestFrag = destFragsArray[destSize - 1]
+                val minDestFrag = destFrags[0]
+                val maxDestFrag = destFrags.last()
 
                 val destTransformFrag = RangeFragment(minDestFrag.start, maxDestFrag.endInclusive)
 
-                ops.add(TransitionOperation.Join(originFragsArray, originTransformFrag))
+                ops.add(TransitionOperation.Join(originGroupRange, originTransformFrag))
 
                 if (originTransformFrag != destTransformFrag) {
                     ops.add(TransitionOperation.Transform(originTransformFrag, destTransformFrag))
                 }
 
-                ops.add(TransitionOperation.Split(destTransformFrag, destFragsArray))
+                ops.add(TransitionOperation.Split(destTransformFrag, destGroupRange))
             }
         }
 

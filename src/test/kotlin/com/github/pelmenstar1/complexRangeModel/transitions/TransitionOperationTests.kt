@@ -1,5 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel.transitions
 
+import com.github.pelmenstar1.complexRangeModel.IntComplexRange
 import com.github.pelmenstar1.complexRangeModel.IntFragmentElement
 import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
 import com.github.pelmenstar1.complexRangeModel.mapToArray
@@ -56,7 +57,7 @@ class TransitionOperationTests {
     fun joinEfficiencyLevelTest() {
         fun testCase(origins: Array<IntRange>, dest: IntRange, expected: Int) {
             assertEfficiencyLevel(expected) {
-                TransitionOperation.Join(origins.mapToArray { IntRangeFragment(it) }, IntRangeFragment(dest))
+                TransitionOperation.Join(IntComplexRange(origins), IntRangeFragment(dest))
             }
         }
 
@@ -68,7 +69,7 @@ class TransitionOperationTests {
     fun splitEfficiencyLevelTest() {
         fun testCase(origin: IntRange, dests: Array<IntRange>, expected: Int) {
             assertEfficiencyLevel(expected) {
-                TransitionOperation.Split(IntRangeFragment(origin), dests.mapToArray { IntRangeFragment(it) })
+                TransitionOperation.Split(IntRangeFragment(origin), IntComplexRange(dests))
             }
         }
 

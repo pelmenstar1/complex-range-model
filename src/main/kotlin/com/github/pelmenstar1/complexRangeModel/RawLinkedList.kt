@@ -1,6 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel
 
-import java.util.*
+import kotlin.NoSuchElementException
 
 class RawLinkedList<T> : MutableList<T> {
     class Node<T>(var value: T) {
@@ -36,7 +36,7 @@ class RawLinkedList<T> : MutableList<T> {
         _size = 1
     }
 
-    private constructor(head: Node<T>?, tail: Node<T>?, size: Int) {
+    internal constructor(head: Node<T>?, tail: Node<T>?, size: Int) {
         _head = head
         _tail = tail
         _size = size
@@ -322,26 +322,41 @@ class RawLinkedList<T> : MutableList<T> {
     }
 
     fun copyOf(): RawLinkedList<T> {
-        val currentHead = head ?: return RawLinkedList()
+        val h = head ?: return RawLinkedList()
 
-        val newHead = Node(currentHead.value)
+        return copyOfBetween(h, _tail!!)
+    }
+
+    fun copyOfBetween(startNode: Node<T>, endNode: Node<T>): RawLinkedList<T> {
+        if (startNode === endNode) {
+            val n = Node(startNode.value)
+
+            return RawLinkedList(n, n, size = 1)
+        }
+
+        var index = 1 // We already added the head.
+        val newHead = Node(startNode.value)
         var newCurrent = newHead
 
-        forEachNodeStartingWith(currentHead.next) { current ->
+        var current: Node<T>? = startNode.next
+
+        while (current != null) {
             val newNode = Node(current.value).apply {
                 previous = newCurrent
             }
 
             newCurrent.next = newNode
             newCurrent = newNode
+            index++
+
+            if (current === endNode) {
+                return RawLinkedList(newHead, newCurrent, size = index)
+            }
+
+            current = current.next
         }
 
-        return RawLinkedList(newHead, newCurrent, _size)
-    }
-
-    fun toArray(output: Array<in T>) {
-        var index = 0
-        forEachForward { output[index++] = it }
+        throw IllegalStateException("Start and end nodes are not linked")
     }
 
     override fun equals(other: Any?): Boolean {
@@ -394,7 +409,7 @@ class RawLinkedList<T> : MutableList<T> {
         return sb.toString()
     }
 
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> {
+    override fun subList(fromIndex: Int, toIndex: Int): RawLinkedList<T> {
         val startNode = getNode(fromIndex)
         val endNode = getNode(toIndex - 1)
         val newSize = toIndex - fromIndex
@@ -510,12 +525,4 @@ class RawLinkedList<T> : MutableList<T> {
             lastReturned.value = element
         }
     }
-}
-
-@Suppress("UNCHECKED_CAST")
-inline fun <reified T> RawLinkedList<T>.toArray(): Array<T> {
-    val arr = arrayOfNulls<T>(size)
-    toArray(arr)
-
-    return arr as Array<T>
 }

@@ -238,34 +238,23 @@ class ComplexRangeTransitionManagerTests {
 
     @Test
     fun consumeElementsForTransformGroupTest() {
-        fun createIterator(ranges: Array<IntRange>): ListIterator<IntRangeFragment> {
-            val list = RawLinkedList<IntRangeFragment>()
-
-            for (i in 1 until ranges.size) {
-                list.add(IntRangeFragment(ranges[i]))
-            }
-
-            return list.listIterator()
+        fun createIterator(ranges: Array<IntRange>): ComplexRangeFragmentListIterator<IntFragmentElement> {
+            return IntComplexRange(ranges).fragments().fragmentIterator()
         }
 
         fun assertConsumed(
             expectedConsumed: Int,
-            iter: ListIterator<IntRangeFragment>,
+            iter: ComplexRangeFragmentListIterator<IntFragmentElement>,
             input: Array<IntRange>,
-            groupFrags: RawLinkedList<IntRangeFragment>,
+            groupComplexRange: IntComplexRange,
             sourceType: String, testType: String
         ) {
-            val resultGroupElements = groupFrags.toTypedArray()
+            val resultGroupElements = groupComplexRange.fragments().toTypedArray()
 
             assertEquals(expectedConsumed, resultGroupElements.size, "$sourceType consumed ($testType)")
 
             val slicedInput = input.take(expectedConsumed).map { IntRangeFragment(it) }.toTypedArray()
             assertContentEquals(slicedInput, resultGroupElements, "$sourceType elements ($testType)")
-
-            // +1 because first element in 'input' is already consumed
-            val consumedFromIter = iter.nextIndex() + 1
-
-            assertEquals(expectedConsumed, consumedFromIter, "$sourceType consumed from iterator ($testType)")
         }
 
         fun testCaseBase(
@@ -278,14 +267,22 @@ class ComplexRangeTransitionManagerTests {
             val originIter = createIterator(origin)
             val destIter = createIterator(dest)
 
-            val originGroupFrags = RawLinkedList(IntRangeFragment(origin[0]))
-            val destGroupFrags = RawLinkedList(IntRangeFragment(dest[0]))
+            originIter.moveNext()
+            destIter.moveNext()
+
+            val originFirstFrag = originIter.current
+
+            originIter.mark()
+            destIter.mark()
 
             val manager = ComplexRangeTransitionManager.noMove()
-            manager.consumeElementsForTransformGroup(originIter, destIter, originGroupFrags, destGroupFrags)
+            manager.consumeElementsForTransformGroup(originFirstFrag, originIter, destIter)
 
-            assertConsumed(expectedOriginConsumed, originIter, origin, originGroupFrags, "origin", testType)
-            assertConsumed(expectedDestConsumed, destIter, dest, destGroupFrags, "dest", testType)
+            val originGroupRange = originIter.subRange()
+            val destGroupRange = destIter.subRange()
+
+            assertConsumed(expectedOriginConsumed, originIter, origin, originGroupRange, "origin", testType)
+            assertConsumed(expectedDestConsumed, destIter, dest, destGroupRange, "dest", testType)
         }
 
         fun testCase(

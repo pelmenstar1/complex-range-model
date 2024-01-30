@@ -5,10 +5,67 @@ import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRange
 import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRangeBuilder
 import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRangeModify
 
+interface ComplexRangeFragmentListIterator<T : FragmentElement<T>> {
+    val current: RangeFragment<T>
+
+    fun moveNext(): Boolean
+    fun movePrevious(): Boolean
+
+    fun mark()
+    fun subRange(): ComplexRange<T>
+}
+
+private object EmptyComplexRangeFragmentListIterator : ComplexRangeFragmentListIterator<Nothing> {
+    override val current: RangeFragment<Nothing>
+        get() = throw NoSuchElementException()
+
+    override fun moveNext(): Boolean = false
+    override fun movePrevious(): Boolean = false
+
+    override fun mark() {
+    }
+
+    override fun subRange(): ComplexRange<Nothing> = EmptyComplexRange
+}
+
+interface ComplexRangeFragmentList<T : FragmentElement<T>> : List<RangeFragment<T>> {
+    fun last(): RangeFragment<T> {
+        return this[lastIndex]
+    }
+
+    fun fragmentIterator(): ComplexRangeFragmentListIterator<T>
+}
+
+private object EmptyComplexRangeFragmentList : ComplexRangeFragmentList<Nothing> {
+    override val size: Int
+        get() = 0
+
+    override fun isEmpty(): Boolean = true
+
+    override fun get(index: Int): RangeFragment<Nothing> = throw IndexOutOfBoundsException()
+
+    override fun subList(fromIndex: Int, toIndex: Int): List<RangeFragment<Nothing>> {
+        return if (fromIndex == 0 && toIndex == 0) this else throw IndexOutOfBoundsException()
+    }
+
+    override fun contains(element: RangeFragment<Nothing>): Boolean = false
+
+    override fun containsAll(elements: Collection<RangeFragment<Nothing>>): Boolean = elements.isEmpty()
+
+    override fun indexOf(element: RangeFragment<Nothing>): Int = -1
+    override fun lastIndexOf(element: RangeFragment<Nothing>): Int = -1
+
+    override fun iterator(): Iterator<Nothing> = emptyIterator()
+    override fun listIterator(): ListIterator<Nothing> = emptyIterator()
+    override fun listIterator(index: Int): ListIterator<Nothing> = emptyIterator()
+
+    override fun fragmentIterator(): ComplexRangeFragmentListIterator<Nothing> = EmptyComplexRangeFragmentListIterator
+}
+
 interface ComplexRange<T : FragmentElement<T>> {
     fun modify(block: ComplexRangeModify<T>.() -> Unit): ComplexRange<T>
 
-    fun fragments(): List<RangeFragment<T>>
+    fun fragments(): ComplexRangeFragmentList<T>
 
     fun elements(): Collection<T> {
         return ComplexRangeElementCollection(fragments())
@@ -30,7 +87,7 @@ private object EmptyComplexRange : ComplexRange<Nothing> {
         return GenericComplexRange(fragments)
     }
 
-    override fun fragments(): List<RangeFragment<Nothing>> = emptyList()
+    override fun fragments(): ComplexRangeFragmentList<Nothing> = EmptyComplexRangeFragmentList
     override fun elements(): Collection<Nothing> = emptyList()
 
     override fun equals(other: Any?): Boolean {
@@ -48,6 +105,18 @@ private object EmptyComplexRange : ComplexRange<Nothing> {
 
 inline fun <T : FragmentElement<T>> ComplexRange(block: ComplexRangeBuilder<T>.() -> Unit): ComplexRange<T> {
     return GenericComplexRangeBuilder<T>().also(block).build()
+}
+
+fun <T : FragmentElement<T>> ComplexRange(fragments: Array<out RangeFragment<T>>): ComplexRange<T> {
+    return ComplexRange {
+        fragments.forEach { fragment(it) }
+    }
+}
+
+fun<T : FragmentElement<T>> ComplexRange(fragments: Iterable<RangeFragment<T>>): ComplexRange<T> {
+    return ComplexRange {
+        fragments.forEach { fragment(it) }
+    }
 }
 
 inline fun BitIntComplexRange(

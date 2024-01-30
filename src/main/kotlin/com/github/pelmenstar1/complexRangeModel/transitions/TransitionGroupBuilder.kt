@@ -21,12 +21,20 @@ class TransitionGroupBuilder<T : FragmentElement<T>> {
         ops.add(TransitionOperation.Move(origin, destination))
     }
 
-    fun split(origin: RangeFragment<T>, destinations: Array<RangeFragment<T>>) {
-        ops.add(TransitionOperation.Split(origin, destinations))
+    fun split(origin: RangeFragment<T>, destinations: Array<out RangeFragment<T>>) {
+        split(origin, ComplexRange(destinations))
     }
 
-    fun join(origins: Array<RangeFragment<T>>, destination: RangeFragment<T>) {
-        ops.add(TransitionOperation.Join(origins, destination))
+    fun split(origin: RangeFragment<T>, destination: ComplexRange<T>) {
+        ops.add(TransitionOperation.Split(origin, destination))
+    }
+
+    fun join(origin: ComplexRange<T>, destination: RangeFragment<T>) {
+        ops.add(TransitionOperation.Join(origin, destination))
+    }
+
+    fun join(origins: Array<out RangeFragment<T>>, destination: RangeFragment<T>) {
+        join(ComplexRange(origins), destination)
     }
 
     fun build(): TransitionGroup<T> = TransitionGroup.create(ops)
@@ -41,17 +49,17 @@ fun TransitionGroupBuilder<IntFragmentElement>.remove(range: IntRange) {
 }
 
 fun TransitionGroupBuilder<IntFragmentElement>.join(originRanges: Array<IntRange>, destRange: IntRange) {
-    join(originRanges.mapToArray { IntRangeFragment(it) }, IntRangeFragment(destRange))
+    join(IntComplexRange(originRanges), IntRangeFragment(destRange))
 }
 
 fun TransitionGroupBuilder<IntFragmentElement>.split(originRange: IntRange, destRanges: Array<IntRange>) {
-    split(IntRangeFragment(originRange), destRanges.mapToArray { IntRangeFragment(it) })
+    split(IntRangeFragment(originRange), IntComplexRange(destRanges))
 }
 
-fun TransitionGroupBuilder<IntFragmentElement>.transform(origin: IntRange, dest: IntRange){
+fun TransitionGroupBuilder<IntFragmentElement>.transform(origin: IntRange, dest: IntRange) {
     transform(IntRangeFragment(origin), IntRangeFragment(dest))
 }
 
-fun TransitionGroupBuilder<IntFragmentElement>.move(origin: IntRange, dest: IntRange){
+fun TransitionGroupBuilder<IntFragmentElement>.move(origin: IntRange, dest: IntRange) {
     move(IntRangeFragment(origin), IntRangeFragment(dest))
 }

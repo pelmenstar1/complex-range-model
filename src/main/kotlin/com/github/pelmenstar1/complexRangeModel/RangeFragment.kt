@@ -46,8 +46,10 @@ class RangeFragment<T : FragmentElement<T>>(
         return other.start > start && other.endInclusive < endInclusive
     }
 
-    fun containsCompletely(other: RangeFragment<T>): Boolean {
-        return other.start >= start && other.endInclusive <= endInclusive
+    fun containsCompletely(other: RangeFragment<T>) = containsCompletely(other.start, other.endInclusive)
+
+    fun containsCompletely(otherStart: T, otherEndInclusive: T): Boolean {
+        return otherStart >= start && otherEndInclusive <= endInclusive
     }
 
     fun leftContains(other: RangeFragment<T>): Boolean {
@@ -63,10 +65,14 @@ class RangeFragment<T : FragmentElement<T>>(
     }
 
     fun canUniteWith(other: RangeFragment<T>): Boolean {
+        return canUniteWith(other.start, other.endInclusive)
+    }
+
+    fun canUniteWith(otherStart: T, otherEndInclusive: T): Boolean {
         // Fragments can be united if they either:
         // 1. Overlap
-        // 2. Next to each other, e.g [1; 2] and [3; 4] can be united to [1; 4]
-        return overlapsWith(other) || isAdjacentTo(other)
+        // 2. Adjacent to each other, e.g [1; 2] and [3; 4] can be united to [1; 4]
+        return overlapsWith(otherStart, otherEndInclusive) || isAdjacentTo(otherStart, otherEndInclusive)
     }
 
     fun isAdjacentTo(other: RangeFragment<T>) = isAdjacentTo(other.start, other.endInclusive)
