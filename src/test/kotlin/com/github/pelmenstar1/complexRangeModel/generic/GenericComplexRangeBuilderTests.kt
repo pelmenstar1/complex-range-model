@@ -1,8 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel.generic
 
-import com.github.pelmenstar1.complexRangeModel.ComplexRange
-import com.github.pelmenstar1.complexRangeModel.IntComplexRange
-import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
+import com.github.pelmenstar1.complexRangeModel.*
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -10,7 +8,7 @@ import kotlin.test.assertEquals
 class GenericComplexRangeBuilderTests {
     @Test
     fun createEmptyTest() {
-        val emptyRange = IntComplexRange {  }
+        val emptyRange = IntComplexRange { }
 
         assertEquals(ComplexRange.empty(), emptyRange)
     }
@@ -53,11 +51,6 @@ class GenericComplexRangeBuilderTests {
         )
 
         createRangeTestHelper(
-            arrayOf(3..4, 1..5),
-            expected = arrayOf(1..5)
-        )
-
-        createRangeTestHelper(
             arrayOf(1..2, 4..6, 1..4),
             expected = arrayOf(1..6)
         )
@@ -74,9 +67,21 @@ class GenericComplexRangeBuilderTests {
     }
 
     private fun createRangeTestHelper(fragmentRanges: Array<IntRange>, expected: Array<IntRange> = fragmentRanges) {
-        val actual = IntComplexRange(fragmentRanges)
+        // Regardless of the order of addition, the result must be the same.
+        for (permRanges in fragmentRanges.allPermutations()) {
+            createRangeTestHelperBase(permRanges, expected)
+        }
+    }
 
-        val expectedFragments = expected.map { IntRangeFragment(it) }.toTypedArray()
+    private fun createRangeTestHelperBase(
+        fragmentRanges: Array<out IntRange>,
+        expected: Array<out IntRange> = fragmentRanges
+    ) {
+        val actual = IntComplexRange {
+            fragmentRanges.forEach { fragment(it) }
+        }
+
+        val expectedFragments = expected.mapToArray { IntRangeFragment(it) }
         val actualFragments = actual.fragments().toTypedArray()
 
         assertContentEquals(expectedFragments, actualFragments)

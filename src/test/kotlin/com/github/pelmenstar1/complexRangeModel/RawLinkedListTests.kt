@@ -107,21 +107,17 @@ class RawLinkedListTests {
     }
 
     @Test
-    fun insertBeforeHeadTest() {
-        fun testCase(
-            initialValues: IntArray,
-            newValue: Int,
-            expectedValues: IntArray
-        ) {
+    fun insertBeforeNodeTest() {
+        fun testCase(initialValues: IntArray, nodeIndex: Int, newValue: Int, expectedValues: IntArray) {
             val list = createList(initialValues)
-            list.insertBeforeHead(newValue)
+            val node = list.getNode(nodeIndex)
+            list.insertBeforeNode(newValue, node)
 
             validateList(list, expectedValues)
         }
 
-        testCase(initialValues = intArrayOf(), newValue = 0, expectedValues = intArrayOf(0))
-        testCase(initialValues = intArrayOf(1), newValue = 0, expectedValues = intArrayOf(0, 1))
-        testCase(initialValues = intArrayOf(1, 2), newValue = 0, expectedValues = intArrayOf(0, 1, 2))
+        testCase(initialValues = intArrayOf(0), nodeIndex = 0, newValue = 1, expectedValues = intArrayOf(1, 0))
+        testCase(initialValues = intArrayOf(0, 2), nodeIndex = 1, newValue = 1, expectedValues = intArrayOf(0, 1, 2))
     }
 
     @Test

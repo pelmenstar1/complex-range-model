@@ -208,21 +208,6 @@ class RawLinkedList<T> : MutableList<T> {
         return elements.isNotEmpty()
     }
 
-    fun insertBeforeHead(element: T) {
-        val node = Node(element)
-        val h = head
-
-        if (h == null) {
-            _tail = node
-        } else {
-            node.next = h
-            h.previous = node
-        }
-
-        _head = node
-        _size++
-    }
-
     fun insertBeforeNode(element: T, node: Node<T>): Node<T> {
         val newNode = Node(element)
 
@@ -235,7 +220,7 @@ class RawLinkedList<T> : MutableList<T> {
         prevNode?.next = newNode
 
         if (node === _head) {
-            _head = node
+            _head = newNode
         }
 
         _size++

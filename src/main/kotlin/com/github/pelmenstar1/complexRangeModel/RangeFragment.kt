@@ -55,24 +55,32 @@ class RangeFragment<T : FragmentElement<T>>(
     }
 
     fun overlapsWith(other: RangeFragment<T>): Boolean {
-        return start <= other.endInclusive && other.start <= endInclusive
+        return overlapsWith(other.start, other.endInclusive)
+    }
+
+    fun overlapsWith(otherStart: T, otherEndInclusive: T): Boolean {
+        return start <= otherEndInclusive && otherStart <= endInclusive
     }
 
     fun canUniteWith(other: RangeFragment<T>): Boolean {
         // Fragments can be united if they either:
         // 1. Overlap
         // 2. Next to each other, e.g [1; 2] and [3; 4] can be united to [1; 4]
-        return overlapsWith(other) ||
-                endInclusive.next() == other.start ||
-                other.endInclusive.next() == start
+        return overlapsWith(other) || isAdjacentTo(other)
     }
 
-    fun uniteWith(other: RangeFragment<T>): RangeFragment<T>? {
-        if (canUniteWith(other)) {
-            return RangeFragment(minOf(start, other.start), maxOf(endInclusive, other.endInclusive))
-        }
+    fun isAdjacentTo(other: RangeFragment<T>) = isAdjacentTo(other.start, other.endInclusive)
 
-        return null
+    fun isAdjacentTo(otherStart: T, otherEndInclusive: T): Boolean {
+        return isAdjacentLeft(otherStart) || isAdjacentRight(otherEndInclusive)
+    }
+
+    fun isAdjacentLeft(otherStart: T): Boolean {
+        return endInclusive.next() == otherStart
+    }
+
+    fun isAdjacentRight(otherEndInclusive: T): Boolean {
+        return start == otherEndInclusive.next()
     }
 
     fun isBefore(other: RangeFragment<T>): Boolean {

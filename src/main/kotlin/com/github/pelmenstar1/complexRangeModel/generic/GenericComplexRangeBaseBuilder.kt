@@ -16,36 +16,40 @@ abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
     }
 
     protected fun includeFragment(fragment: RangeFragment<T>) {
-        if (fragments.isEmpty()) {
-            fragments.add(fragment)
-            return
-        }
-
         fragments.forEachNode { node ->
             val thisFragment = node.value
 
-            if (thisFragment == fragment) {
-                // No need for creating new array if we're adding the same fragment to the array
+            if (thisFragment.containsCompletely(fragment)) {
+                // Bail out. No sense in adding the fragment that is already in the 'fragments' list.
+                // (Even if thisFragment isn't equal to 'fragment', thisFragment contains all the values from 'fragment')
                 return
             }
 
-            val unitedFragment = thisFragment.uniteWith(fragment)
-            if (unitedFragment != null) {
-                includeFragmentWithUniting(unitedFragment, node)
+            if (thisFragment.canUniteWith(fragment)) {
+                val minElement = minOf(thisFragment.start, fragment.start)
+                val maxElement = maxOf(thisFragment.endInclusive, fragment.endInclusive)
+
+                includeFragmentWithUniting(minElement, maxElement, node)
+                return
+            }
+
+            if (fragment.isBefore(thisFragment)) {
+                fragments.insertBeforeNode(fragment, node)
                 return
             }
         }
 
-        // Given fragment cannot be united with any of current fragments.
-        // Then find its index (for the ranges to be sorted) and insert it
-        includeFragmentWithoutUniting(fragment)
+        // If we can't unite given fragment with any other fragments and can't find a position to insert the fragment,
+        // then add it to the end - it's greater than other fragments
+        fragments.add(fragment)
     }
 
     private fun includeFragmentWithUniting(
-        fragmentUnitedWithStart: RangeFragment<T>,
+        minElement: T,
+        initialMaxElement: T,
         startNode: RawLinkedList.Node<RangeFragment<T>>
     ) {
-        var totalUnitedFragment = fragmentUnitedWithStart
+        var maxElement = initialMaxElement
 
         // Last node cannot be null because the list is not empty.
         var endNode = fragments.tail
@@ -53,41 +57,22 @@ abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
         fragments.forEachNodeStartingWith(startNode.next) { node ->
             val currentFragment = node.value
 
-            val unitedFragment = totalUnitedFragment.uniteWith(currentFragment)
-            if (unitedFragment != null) {
-                totalUnitedFragment = unitedFragment
+            if (currentFragment.overlapsWith(minElement, maxElement) || currentFragment.isAdjacentRight(maxElement)) {
+                // currentFragment.endInclusive is always greater than current value of maxElement
+                maxElement = currentFragment.endInclusive
             } else {
+                // node.previous cannot be null, because we start iterating from startNode.next
+                // (which is not null if we're here)
                 endNode = node.previous
 
-                // Bail out from the loop
+                // Bail out from the loop - if currentFragment cannot be united with fragment [minElement, maxElement],
+                // then no next fragments can.
                 return@forEachNodeStartingWith
             }
         }
 
-        fragments.replaceBetweenWith(totalUnitedFragment, startNode, endNode!!)
-    }
-
-    private fun includeFragmentWithoutUniting(fragment: RangeFragment<T>) {
-        val insertNode = findNewFragmentInsertAfterNode(fragment)
-
-        if (insertNode == null) {
-            fragments.insertBeforeHead(fragment)
-        } else {
-            fragments.insertAfterNode(fragment, insertNode)
-        }
-    }
-
-    // Tries to find the node after which the fragment should be inserted. It returns null, when
-    // the fragment should be inserted before the head.
-    private fun findNewFragmentInsertAfterNode(fragment: RangeFragment<T>): RawLinkedList.Node<RangeFragment<T>>? {
-        // It assumes that given fragment doesn't overlap with any of current fragments
-        fragments.forEachNode { node ->
-            if (fragment.isBefore(node.value)) {
-                return node.previous
-            }
-        }
-
-        return fragments.tail
+        val unitedFragment = RangeFragment(minElement, maxElement)
+        fragments.replaceBetweenWith(unitedFragment, startNode, endNode!!)
     }
 
     protected fun excludeFragment(fragment: RangeFragment<T>) {

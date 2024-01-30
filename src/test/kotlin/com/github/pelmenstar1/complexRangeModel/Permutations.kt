@@ -1,0 +1,42 @@
+package com.github.pelmenstar1.complexRangeModel
+
+private fun<T> MutableList<T>.swap(i: Int, j: Int) {
+    val t = this[i]
+    this[i] = this[j]
+    this[j] = t
+}
+
+// Heap's algorithm
+fun<T> Collection<T>.allPermutations(): Sequence<Collection<T>> {
+    val thisCol = this
+    val elements = toMutableList()
+
+    return sequence {
+        val c = IntArray(elements.size)
+
+        yield(thisCol)
+
+        var i = 1
+        while (i < elements.size) {
+            if (c[i] < i) {
+                if (i % 2 == 0) {
+                    elements.swap(0, i)
+                } else {
+                    elements.swap(c[i], i)
+                }
+
+                yield(elements.toList())
+
+                c[i]++
+                i = 1
+            } else {
+                c[i] = 0
+                i++
+            }
+        }
+    }
+}
+
+inline fun<reified T> Array<out T>.allPermutations(): Sequence<Array<out T>> {
+    return toMutableList().allPermutations().map { it.toTypedArray() }
+}
