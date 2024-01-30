@@ -11,28 +11,28 @@ class RangeFragmentTests {
         assertFailsWith<IllegalArgumentException> { IntRangeFragment(2, 1) }
     }
 
-    private fun predicateMemberTestHelper(
+    private fun<T> memberTestHelper(
         r1: IntRange, r2: IntRange,
-        expected: Boolean,
-        predicate: (IntRangeFragment, IntRangeFragment) -> Boolean,
+        expected: T,
+        predicate: (IntRangeFragment, IntRangeFragment) -> T,
     ) {
         val actualResult = predicate(IntRangeFragment(r1), IntRangeFragment(r2))
         assertEquals(expected, actualResult)
     }
 
-    private fun commutativePredicateMemberTestHelper(
+    private fun<T> commutativeMemberTestHelper(
         r1: IntRange, r2: IntRange,
-        expected: Boolean,
-        predicate: (IntRangeFragment, IntRangeFragment) -> Boolean,
+        expected: T,
+        predicate: (IntRangeFragment, IntRangeFragment) -> T,
     ) {
-        predicateMemberTestHelper(r1, r2, expected, predicate)
-        predicateMemberTestHelper(r2, r1, expected, predicate)
+        memberTestHelper(r1, r2, expected, predicate)
+        memberTestHelper(r2, r1, expected, predicate)
     }
 
     @Test
     fun canUniteWithTest() {
         fun testHelper(r1: IntRange, r2: IntRange, expected: Boolean) {
-           commutativePredicateMemberTestHelper(r1, r2, expected, IntRangeFragment::canUniteWith)
+           commutativeMemberTestHelper(r1, r2, expected, IntRangeFragment::canUniteWith)
         }
 
         testHelper(1..2, 2..3, expected = true)
@@ -44,7 +44,7 @@ class RangeFragmentTests {
     @Test
     fun overlapsTest() {
         fun testHelper(r1: IntRange, r2: IntRange, expected: Boolean) {
-            commutativePredicateMemberTestHelper(r1, r2, expected, IntRangeFragment::overlapsWith)
+            commutativeMemberTestHelper(r1, r2, expected, IntRangeFragment::overlapsWith)
         }
 
         testHelper(1..2, 2..3, expected = true)
@@ -57,7 +57,7 @@ class RangeFragmentTests {
     @Test
     fun containsExclusiveTest() {
         fun testHelper(base: IntRange, needle: IntRange, expected: Boolean) {
-            predicateMemberTestHelper(base, needle, expected, IntRangeFragment::containsExclusive)
+            memberTestHelper(base, needle, expected, IntRangeFragment::containsExclusive)
         }
 
         testHelper(base = 1..5, needle = 2..2, expected = true)
@@ -71,7 +71,7 @@ class RangeFragmentTests {
     @Test
     fun containsCompletelyTest() {
         fun testHelper(base: IntRange, needle: IntRange, expected: Boolean) {
-            predicateMemberTestHelper(base, needle, expected, IntRangeFragment::containsCompletely)
+            memberTestHelper(base, needle, expected, IntRangeFragment::containsCompletely)
         }
 
         testHelper(base = 1..5, needle = 2..2, expected = true)
@@ -85,7 +85,7 @@ class RangeFragmentTests {
     @Test
     fun leftContainsTest() {
         fun testHelper(base: IntRange, needle: IntRange, expected: Boolean) {
-            predicateMemberTestHelper(base, needle, expected, IntRangeFragment::leftContains)
+            memberTestHelper(base, needle, expected, IntRangeFragment::leftContains)
         }
 
         testHelper(base = 1..5, needle = 1..5, expected = true)
@@ -109,6 +109,17 @@ class RangeFragmentTests {
         testHelper(1..1, expected = intArrayOf(1))
         testHelper(0..1, expected = intArrayOf(0, 1))
         testHelper(0..2, expected = intArrayOf(0, 1, 2))
+    }
+
+    @Test
+    fun getRawMoveDistanceToTest() {
+        fun testHelper(r1: IntRange, r2: IntRange, expected: Int) {
+            commutativeMemberTestHelper(r1, r2, expected, IntRangeFragment::getRawDistanceTo)
+        }
+
+        testHelper(1..2, 1..1, expected = 0)
+        testHelper(1..2, 3..4, expected = 1)
+        testHelper(1..2, 4..5, expected = 2)
     }
 
     @Test

@@ -83,6 +83,21 @@ class RangeFragment<T : FragmentElement<T>>(
         return endInclusive >= other.endInclusive
     }
 
+    fun getRawDistanceTo(other: RangeFragment<T>): Int {
+        return if (overlapsWith(other)) {
+            0
+        } else {
+            val thisStart = start
+            val otherStart = other.start
+
+            if (thisStart >= otherStart) {
+                other.endInclusive.countElementsTo(thisStart)
+            } else {
+                endInclusive.countElementsTo(otherStart)
+            }
+        }
+    }
+
     override fun iterator(): Iterator<T> = IteratorImpl()
 
     private inner class IteratorImpl : Iterator<T> {
@@ -94,11 +109,7 @@ class RangeFragment<T : FragmentElement<T>>(
 
         override fun next(): T {
             var lr = lastReturned
-            if (lr == null) {
-                lr = start
-            } else {
-                lr = lr.next()
-            }
+            lr = lr?.next() ?: start
 
             lastReturned = lr
             return lr
