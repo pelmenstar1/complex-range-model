@@ -6,7 +6,6 @@ private typealias FragmentIterator<T> = ListIterator<RangeFragment<T>>
 private typealias FragmentLinkedList<T> = RawLinkedList<RangeFragment<T>>
 
 class ComplexRangeTransitionManager<T : FragmentElement<T>>(
-    private val fragmentFactory: RangeFragmentFactory<T>,
     private val proxDetector: FragmentProximityDetector<T>
 ) {
     fun createTransition(origin: ComplexRange<T>, dest: ComplexRange<T>): ComplexRangeTransition<T> {
@@ -184,7 +183,7 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
 
                 val minFrag = destFragsArray[0]
                 val maxFrag = destFragsArray[destSize - 1]
-                val destTransformFrag = fragmentFactory.create(minFrag.start, maxFrag.endInclusive)
+                val destTransformFrag = RangeFragment(minFrag.start, maxFrag.endInclusive)
 
                 if (originFrag != destTransformFrag) {
                     ops.add(TransitionOperation.Transform(originFrag, destTransformFrag))
@@ -198,7 +197,7 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
 
             val minOriginFrag = originFragsArray[0]
             val maxOriginFrag = originFragsArray[originSize - 1]
-            val originTransformFrag = fragmentFactory.create(minOriginFrag.start, maxOriginFrag.endInclusive)
+            val originTransformFrag = RangeFragment(minOriginFrag.start, maxOriginFrag.endInclusive)
 
             if (destSize == 1) {
                 val destFrag = destFrags.firstValue
@@ -222,7 +221,7 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
                 val minDestFrag = destFragsArray[0]
                 val maxDestFrag = destFragsArray[destSize - 1]
 
-                val destTransformFrag = fragmentFactory.create(minDestFrag.start, maxDestFrag.endInclusive)
+                val destTransformFrag = RangeFragment(minDestFrag.start, maxDestFrag.endInclusive)
 
                 ops.add(TransitionOperation.Join(originFragsArray, originTransformFrag))
 
@@ -238,15 +237,12 @@ class ComplexRangeTransitionManager<T : FragmentElement<T>>(
     }
 
     companion object {
-        fun intNoMove(): ComplexRangeTransitionManager<IntFragmentElement> {
-            return ComplexRangeTransitionManager(IntRangeFragmentFactory, FragmentProximityDetector.noMove())
+        fun noMove(): ComplexRangeTransitionManager<IntFragmentElement> {
+            return ComplexRangeTransitionManager(FragmentProximityDetector.noMove())
         }
 
-        fun intWithMoveDistance(maxMoveDist: Int): ComplexRangeTransitionManager<IntFragmentElement> {
-            return ComplexRangeTransitionManager(
-                IntRangeFragmentFactory,
-                FragmentProximityDetector.withMoveDistance(maxMoveDist)
-            )
+        fun withMoveDistance(maxMoveDist: Int): ComplexRangeTransitionManager<IntFragmentElement> {
+            return ComplexRangeTransitionManager(FragmentProximityDetector.withMoveDistance(maxMoveDist))
         }
     }
 }

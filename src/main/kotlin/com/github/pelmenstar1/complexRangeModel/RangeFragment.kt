@@ -145,16 +145,6 @@ fun<T : DistanceFragmentElement<T, D>, D> RangeFragment<T>.isDistanceLessThanOrE
     }
 }
 
-fun interface RangeFragmentFactory<T : FragmentElement<T>> {
-    fun create(start: T, endInclusive: T): RangeFragment<T>
-}
-
-object IntRangeFragmentFactory : RangeFragmentFactory<IntFragmentElement> {
-    override fun create(start: IntFragmentElement, endInclusive: IntFragmentElement): IntRangeFragment {
-        return IntRangeFragment(start, endInclusive)
-    }
-}
-
 fun IntRangeFragment(start: Int, endInclusive: Int): IntRangeFragment {
     return IntRangeFragment(IntFragmentElement(start), IntFragmentElement(endInclusive))
 }

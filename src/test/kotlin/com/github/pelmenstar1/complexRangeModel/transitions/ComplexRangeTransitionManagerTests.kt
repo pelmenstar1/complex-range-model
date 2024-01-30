@@ -281,7 +281,7 @@ class ComplexRangeTransitionManagerTests {
             val originGroupFrags = RawLinkedList(IntRangeFragment(origin[0]))
             val destGroupFrags = RawLinkedList(IntRangeFragment(dest[0]))
 
-            val manager = ComplexRangeTransitionManager.intNoMove()
+            val manager = ComplexRangeTransitionManager.noMove()
             manager.consumeElementsForTransformGroup(originIter, destIter, originGroupFrags, destGroupFrags)
 
             assertConsumed(expectedOriginConsumed, originIter, origin, originGroupFrags, "origin", testType)
@@ -368,6 +368,6 @@ class ComplexRangeTransitionManagerTests {
         dest: IntComplexRange,
         maxMoveDist: Int = -1
     ): ComplexRangeTransition<IntFragmentElement> {
-        return ComplexRangeTransitionManager.intWithMoveDistance(maxMoveDist).createTransition(origin, dest)
+        return ComplexRangeTransitionManager.withMoveDistance(maxMoveDist).createTransition(origin, dest)
     }
 }
