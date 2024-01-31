@@ -4,7 +4,8 @@ import com.github.pelmenstar1.complexRangeModel.*
 import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
 import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRange
 
-class BitArrayComplexRangeBuilder(private val limitStart: Int, private val limitEnd: Int) : ComplexRangeBuilder<IntFragmentElement> {
+@PublishedApi // For the builder method.
+internal class BitArrayComplexRangeBuilder(private val limitStart: Int, private val limitEnd: Int) : ComplexRangeBuilder<IntFragmentElement> {
     private val bitSet = FixedBitSet(limitEnd - limitStart + 1)
 
     override fun fragment(value: IntRangeFragment) {

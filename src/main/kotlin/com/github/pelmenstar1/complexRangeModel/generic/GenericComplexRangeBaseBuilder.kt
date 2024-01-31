@@ -4,7 +4,7 @@ import com.github.pelmenstar1.complexRangeModel.FragmentElement
 import com.github.pelmenstar1.complexRangeModel.RangeFragment
 import com.github.pelmenstar1.complexRangeModel.RawLinkedList
 
-abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
+internal abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
     protected val fragments: RawLinkedList<RangeFragment<T>>
 
     protected constructor() {

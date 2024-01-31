@@ -1,10 +1,10 @@
 package com.github.pelmenstar1.complexRangeModel
 
-fun <T> Iterable<T>.sequenceEquals(other: Iterable<T>): Boolean {
+internal fun <T> Iterable<T>.sequenceEquals(other: Iterable<T>): Boolean {
     return iterator().contentEquals(other.iterator())
 }
 
-fun <T> Iterator<T>.contentEquals(otherIterator: Iterator<T>): Boolean {
+internal fun <T> Iterator<T>.contentEquals(otherIterator: Iterator<T>): Boolean {
     while (hasNext()) {
         if (!otherIterator.hasNext()) {
             return false
@@ -21,7 +21,7 @@ fun <T> Iterator<T>.contentEquals(otherIterator: Iterator<T>): Boolean {
     return !otherIterator.hasNext()
 }
 
-inline fun<T, reified R> Array<T>.mapToArray(mapping: (T) -> R): Array<R> {
+internal inline fun<T, reified R> Array<T>.mapToArray(mapping: (T) -> R): Array<R> {
     return Array(size) { i -> mapping(get(i)) }
 }
 
@@ -40,4 +40,4 @@ private object EmptyIterator : ListIterator<Nothing> {
     }
 }
 
-fun <T> emptyIterator(): ListIterator<T> = EmptyIterator
+internal fun <T> emptyIterator(): ListIterator<T> = EmptyIterator

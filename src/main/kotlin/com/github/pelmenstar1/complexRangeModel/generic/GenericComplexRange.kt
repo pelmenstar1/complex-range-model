@@ -2,7 +2,7 @@ package com.github.pelmenstar1.complexRangeModel.generic
 
 import com.github.pelmenstar1.complexRangeModel.*
 
-class GenericComplexRange<T : FragmentElement<T>> internal constructor(
+internal class GenericComplexRange<T : FragmentElement<T>> internal constructor(
     private val fragments: RawLinkedList<RangeFragment<T>>
 ) : ComplexRange<T> {
     private val wrappedFragments = RawLinkedFragmentList(fragments)
@@ -141,7 +141,8 @@ private class RawLinkedFragmentList<T : FragmentElement<T>>(
     }
 }
 
-class GenericComplexRangeBuilder<T : FragmentElement<T>> : GenericComplexRangeBaseBuilder<T>(), ComplexRangeBuilder<T> {
+@PublishedApi // For the builder method.
+internal class GenericComplexRangeBuilder<T : FragmentElement<T>> : GenericComplexRangeBaseBuilder<T>(), ComplexRangeBuilder<T> {
     override fun fragment(value: RangeFragment<T>) {
         includeFragment(value)
     }
@@ -151,7 +152,7 @@ class GenericComplexRangeBuilder<T : FragmentElement<T>> : GenericComplexRangeBa
     }
 }
 
-class GenericComplexRangeModify<T : FragmentElement<T>>(
+internal class GenericComplexRangeModify<T : FragmentElement<T>>(
     fragments: RawLinkedList<RangeFragment<T>>
 ) : GenericComplexRangeBaseBuilder<T>(fragments), ComplexRangeModify<T> {
     override fun set(fragment: RangeFragment<T>) {
