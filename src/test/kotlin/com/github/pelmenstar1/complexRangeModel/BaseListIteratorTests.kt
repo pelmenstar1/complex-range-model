@@ -1,7 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel
 
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 

@@ -3,7 +3,6 @@ package com.github.pelmenstar1.complexRangeModel.transitions
 import com.github.pelmenstar1.complexRangeModel.IntComplexRange
 import com.github.pelmenstar1.complexRangeModel.IntFragmentElement
 import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
-import com.github.pelmenstar1.complexRangeModel.mapToArray
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

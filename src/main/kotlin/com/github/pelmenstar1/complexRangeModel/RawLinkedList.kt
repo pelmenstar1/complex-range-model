@@ -28,13 +28,6 @@ class RawLinkedList<T> : MutableList<T> {
         get() = _size
 
     constructor()
-    constructor(singleElement: T) {
-        val node = Node(singleElement)
-
-        _head = node
-        _tail = node
-        _size = 1
-    }
 
     internal constructor(head: Node<T>?, tail: Node<T>?, size: Int) {
         _head = head
