@@ -102,21 +102,25 @@ abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
         } else if (affectedFragment.containsExclusive(excludeFragment)) {
             splitFragmentWithExcludingOtherFragment(affectedNode, excludeFragment)
         } else if (affectedFragment.leftContains(excludeFragment)) {
-            // Something like:
             // affectedFragment:    [] [] | [] []
             // excludeFragment:  [] [] [] |
             // result:                    | [] []
             // So we need to remove the part where these fragments intersect
+            //
+            // Existence of excludeFragment.endExclusive is implied by existence of affectedFragment.endInclusive,
+            // that is greater than excludeFragment.endExclusive
             affectedNode.value = affectedFragment.withStart(excludeFragment.endExclusive)
         } else {
             // affectedFragment is not fragmentToRemove, affectedFragment doesn't contain the fragmentToRemove (exclusively)
             // and the affectedFragment doesn't left-contains the fragmentToRemove,
             // then the affectedFragment right-contains the fragmentToRemove
             //
-            // Something like:
             // affectedFragment: [] [] | [] []
             // excludeFragment:        | [] [] []
             // result:           [] [] |
+            //
+            // Existence of excludeFragment.start.previous() is implied by existence of affectedFragment.start
+            // that is lesser than excludeFragment.start
             affectedNode.value = affectedFragment.withEndExclusive(excludeFragment.start)
         }
     }
@@ -133,18 +137,19 @@ abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
         val removalEndNode: RawLinkedList.Node<RangeFragment<T>>?
 
         if (excludeFragment.isBefore(affectedStartFrag)) {
-            // Something like:
             // affectedStartFrag:    [] [] []
             // excludeFragment:   [] [] [] [] ...
             // So we need to remove the whole affectedStartFrag
             removalStartNode = affectedStartNode
         } else {
-            // Something like:
             // affectedStartFrag: [] [] | [] [] []
             // excludeFragment:         | [] [] [] ...
             // result:            [] []
             // So we need to narrow the affectedStartFrag and remove starting from the next fragment
             removalStartNode = affectedStartNode.next
+
+            // Existence of excludeFragment.start.previous() is implied by existence of affectedStartFrag.start
+            // that is lesser than excludeFragment.start
             affectedStartNode.value = affectedStartFrag.withEndExclusive(excludeFragment.start)
         }
 
@@ -161,6 +166,9 @@ abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
             // result:                      [] []
             // So we need no narrow affectedEndFrag and remove ending with the previous fragment
             removalEndNode = affectedEndNode.previous
+
+            // Existence of excludeFragment.endExclusive is implied by existence of affectedEndFrag.endInclusive
+            // that is greater than excludeFragment.endInclusive
             affectedEndNode.value = affectedEndFrag.withStart(excludeFragment.endExclusive)
         }
 
@@ -178,6 +186,9 @@ abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
         // Range in splitNode: [] [] [] [] [] []
         // excludeFragment:           [] []
         // result:              [] []       [] []
+        // Existence of excludeFragment.start.previous() and excludeFragment.endExclusive is implied by existence of
+        // start and endInclusive of the range in splitNode.
+
         val splitFragment = splitNode.value
 
         // Change range at splitIndex to the left part of the split.

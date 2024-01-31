@@ -3,8 +3,11 @@ package com.github.pelmenstar1.complexRangeModel
 import kotlin.math.abs
 
 interface FragmentElement<T : FragmentElement<T>> : Comparable<T> {
-    fun previous(): T
     fun next(): T
+    fun previous(): T
+
+    fun hasNext(): Boolean
+    fun hasPrevious(): Boolean
 
     fun countElementsTo(other: T): Int
 
@@ -22,13 +25,34 @@ interface DistanceFragmentElement<T : FragmentElement<T>, in D> : FragmentElemen
     fun isDistanceLessThanOrEqual(other: T, maxDistance: D): Boolean
 }
 
-data class IntFragmentElement(val value: Int) : DistanceFragmentElement<IntFragmentElement, Int> {
+open class IntFragmentElement(val value: Int) : DistanceFragmentElement<IntFragmentElement, Int> {
+    override fun hasPrevious(): Boolean {
+        return value != Int.MIN_VALUE
+    }
+
+    override fun hasNext(): Boolean {
+        return value != Int.MAX_VALUE
+    }
+
+    override fun previous(): IntFragmentElement {
+        if (value == Int.MIN_VALUE) {
+            throw NoSuchElementException()
+        }
+
+        return IntFragmentElement(value - 1)
+    }
+
+    override fun next(): IntFragmentElement {
+        if (value == Int.MAX_VALUE) {
+            throw NoSuchElementException()
+        }
+
+        return IntFragmentElement(value + 1)
+    }
+
     override fun compareTo(other: IntFragmentElement): Int {
         return value.compareTo(other.value)
     }
-
-    override fun previous() = IntFragmentElement(value - 1)
-    override fun next() = IntFragmentElement(value + 1)
 
     override fun isDistanceLessThanOrEqual(other: IntFragmentElement, maxDistance: Int): Boolean {
         return abs(value - other.value) <= maxDistance
@@ -41,6 +65,12 @@ data class IntFragmentElement(val value: Int) : DistanceFragmentElement<IntFragm
     override fun countElementsToAbsolute(other: IntFragmentElement): Int {
         return abs(other.value - value)
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is IntFragmentElement && value == other.value
+    }
+
+    override fun hashCode(): Int = value
 
     override fun toString(): String = value.toString()
 }

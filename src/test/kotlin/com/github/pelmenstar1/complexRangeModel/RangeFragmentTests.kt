@@ -14,19 +14,42 @@ class RangeFragmentTests {
     private fun<T> memberTestHelper(
         r1: IntRange, r2: IntRange,
         expected: T,
-        predicate: (IntRangeFragment, IntRangeFragment) -> T,
+        func: (IntRangeFragment, IntRangeFragment) -> T,
     ) {
-        val actualResult = predicate(IntRangeFragment(r1), IntRangeFragment(r2))
+        val actualResult = func(IntRangeFragment(r1), IntRangeFragment(r2))
         assertEquals(expected, actualResult)
     }
 
     private fun<T> commutativeMemberTestHelper(
         r1: IntRange, r2: IntRange,
         expected: T,
-        predicate: (IntRangeFragment, IntRangeFragment) -> T,
+        func: (IntRangeFragment, IntRangeFragment) -> T,
     ) {
-        memberTestHelper(r1, r2, expected, predicate)
-        memberTestHelper(r2, r1, expected, predicate)
+        memberTestHelper(r1, r2, expected, func)
+        memberTestHelper(r2, r1, expected, func)
+    }
+
+    private fun <T> limitedMemberTestHelper(
+        r1: IntRange, r2: IntRange,
+        limit: IntRange,
+        expected: T,
+        func: (RangeFragment<LimitedIntFragmentElement>, RangeFragment<LimitedIntFragmentElement>) -> T
+    ) {
+        val f1 = LimitedIntRangeFragment(limit, r1)
+        val f2 = LimitedIntRangeFragment(limit, r2)
+
+        val actualResult = func(f1, f2)
+        assertEquals(expected, actualResult)
+    }
+
+    private fun <T> limitedCommutativeMemberTestHelper(
+        r1: IntRange, r2: IntRange,
+        limit: IntRange,
+        expected: T,
+        func: (RangeFragment<LimitedIntFragmentElement>, RangeFragment<LimitedIntFragmentElement>) -> T
+    ) {
+        limitedMemberTestHelper(r1, r2, limit, expected, func)
+        limitedMemberTestHelper(r2, r1, limit, expected, func)
     }
 
     @Test
@@ -39,6 +62,15 @@ class RangeFragmentTests {
         testHelper(1..2, 1..2, expected = true)
         testHelper(1..2, 4..5, expected = false)
         testHelper(1..2, 3..4, expected = true)
+    }
+
+    @Test
+    fun limitedCanUniteWithTest() {
+        fun testHelper(r1: IntRange, r2: IntRange, limit: IntRange, expected: Boolean) {
+            limitedCommutativeMemberTestHelper(r1, r2, limit, expected, LimitedIntRangeFragment::canUniteWith)
+        }
+
+        testHelper(r1 = 1..5, r2 = 6..7, limit = 1..7, expected = true)
     }
 
     @Test
@@ -109,6 +141,18 @@ class RangeFragmentTests {
         testHelper(1..1, expected = intArrayOf(1))
         testHelper(0..1, expected = intArrayOf(0, 1))
         testHelper(0..2, expected = intArrayOf(0, 1, 2))
+    }
+
+    @Test
+    fun iteratorThrowsInEndTest() {
+        val iter = IntRangeFragment(1, 3).iterator()
+        while(iter.hasNext()) {
+            iter.next()
+        }
+
+        assertFailsWith<NoSuchElementException> {
+            iter.next()
+        }
     }
 
     @Test

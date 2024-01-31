@@ -82,11 +82,11 @@ class RangeFragment<T : FragmentElement<T>>(
     }
 
     fun isAdjacentLeft(otherStart: T): Boolean {
-        return endInclusive.next() == otherStart
+        return endInclusive.hasNext() && endInclusive.next() == otherStart
     }
 
     fun isAdjacentRight(otherEndInclusive: T): Boolean {
-        return start == otherEndInclusive.next()
+        return start.hasPrevious() && start.previous() == otherEndInclusive
     }
 
     fun isBefore(other: RangeFragment<T>): Boolean {
@@ -123,6 +123,10 @@ class RangeFragment<T : FragmentElement<T>>(
 
         override fun next(): T {
             var lr = lastReturned
+            if (lr == endInclusive) {
+                throw NoSuchElementException()
+            }
+
             lr = lr?.next() ?: start
 
             lastReturned = lr
