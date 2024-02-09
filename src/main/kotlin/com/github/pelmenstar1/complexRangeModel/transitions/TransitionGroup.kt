@@ -44,7 +44,7 @@ interface TransitionGroup<T : FragmentElement<T>> {
          * Returns a new instance of [TransitionGroup] that consists of given operations.
          */
         fun <T : FragmentElement<T>> create(ops: List<TransitionOperation<T>>): TransitionGroup<T> {
-            return CollectionTransitionGroup(ops)
+            return ListTransitionGroup(ops)
         }
     }
 }
@@ -70,8 +70,7 @@ private object EmptyTransitionGroup : TransitionGroup<Nothing> {
     override fun toString(): String = "TransitionGroup()"
 }
 
-private class CollectionTransitionGroup<T : FragmentElement<T>>(
-    // TODO: Change the type to Collection<Transition<T>>
+private class ListTransitionGroup<T : FragmentElement<T>>(
     private val ops: List<TransitionOperation<T>>
 ) : TransitionGroup<T> {
     override fun reversed(): TransitionGroup<T> {
@@ -84,7 +83,7 @@ private class CollectionTransitionGroup<T : FragmentElement<T>>(
             revOps.add(op.reversed())
         }
 
-        return CollectionTransitionGroup(revOps)
+        return ListTransitionGroup(revOps)
     }
 
     override fun efficiencyLevel(): Int {
@@ -99,7 +98,7 @@ private class CollectionTransitionGroup<T : FragmentElement<T>>(
         }
 
         if (other is TransitionGroup<*>) {
-            if (other is CollectionTransitionGroup<*>) {
+            if (other is ListTransitionGroup<*>) {
                 return ops == other.ops
             }
 
