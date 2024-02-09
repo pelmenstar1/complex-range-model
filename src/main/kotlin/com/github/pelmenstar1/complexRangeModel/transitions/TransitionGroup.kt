@@ -3,19 +3,46 @@ package com.github.pelmenstar1.complexRangeModel.transitions
 import com.github.pelmenstar1.complexRangeModel.FragmentElement
 import com.github.pelmenstar1.complexRangeModel.sequenceEquals
 
+/**
+ * Represents a sequence of [TransitionOperation].
+ * The order of processing operations is important - each operation relies on the result of the previous operation.
+ * In other words, the operations should be processed from start to end sequentially.
+ */
 interface TransitionGroup<T : FragmentElement<T>> {
+    /**
+     * Returns a collection of transition operations.
+     */
     fun operations(): Collection<TransitionOperation<T>>
+
+    /**
+     * Computes efficiency level of this group.
+     * It equals to the sum of efficiency levels of each operation in the group.
+     */
     fun efficiencyLevel(): Int
+
+    /**
+     * Returns such [TransitionGroup] that transforms current destination state to current origin state,
+     * i.e. new transition is in reversed order
+     */
     fun reversed(): TransitionGroup<T>
 
     companion object {
+        /**
+         * Returns an instance of [TransitionGroup] that contains no transition operations.
+         */
         @Suppress("UNCHECKED_CAST")
         fun <T : FragmentElement<T>> empty() = EmptyTransitionGroup as TransitionGroup<T>
 
+        /**
+         * Returns a new instance of [TransitionGroup] that contains single given operation.
+         */
         fun <T : FragmentElement<T>> create(op: TransitionOperation<T>): TransitionGroup<T> {
             return create(listOf(op))
         }
 
+        /**
+         * Returns a new instance of [TransitionGroup] that consists of given operations.
+         */
         fun <T : FragmentElement<T>> create(ops: List<TransitionOperation<T>>): TransitionGroup<T> {
             return CollectionTransitionGroup(ops)
         }
@@ -44,6 +71,7 @@ private object EmptyTransitionGroup : TransitionGroup<Nothing> {
 }
 
 private class CollectionTransitionGroup<T : FragmentElement<T>>(
+    // TODO: Change the type to Collection<Transition<T>>
     private val ops: List<TransitionOperation<T>>
 ) : TransitionGroup<T> {
     override fun reversed(): TransitionGroup<T> {

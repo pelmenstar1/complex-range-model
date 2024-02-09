@@ -1,26 +1,47 @@
 package com.github.pelmenstar1.complexRangeModel
 
 import kotlin.NoSuchElementException
+import java.util.LinkedList
 
+/**
+ * Represents a linked list that exposes its underlying [RawLinkedList.Node] class
+ * (unlike standard [LinkedList] class) that allows some operations to be more efficient.
+ */
 class RawLinkedList<T> : MutableList<T> {
+    /**
+     * A node of the linked list.
+     */
     class Node<T>(var value: T) {
         var previous: Node<T>? = null
         var next: Node<T>? = null
     }
 
+    // This property should be changed manually whenever the list size actually changes
     private var _size = 0
     private var _head: Node<T>? = null
     private var _tail: Node<T>? = null
 
+    /**
+     * The head (first node) of the linked list. Might be null, if the list is empty.
+     */
     val head: Node<T>?
         get() = _head
 
+    /**
+     * The tail (last node) of the linked list. Might null, if the list is empty.
+     */
     val tail: Node<T>?
         get() = _tail
 
+    /**
+     * Gets the first value of the list. It throws [IllegalStateException] if the list is empty.
+     */
     val firstValue: T
         get() = _head?.value ?: throw IllegalStateException("List is empty")
 
+    /**
+     * Gets the last value of the list. It throws [IllegalStateException] if the list is empty.
+     */
     val lastValue: T
         get() = _tail?.value ?: throw IllegalStateException("List is empty")
 
@@ -39,6 +60,9 @@ class RawLinkedList<T> : MutableList<T> {
         return _head == null
     }
 
+    /**
+     * Iterates through each element's node of the list starting with given [startNode].
+     */
     inline fun forEachNodeStartingWith(startNode: Node<T>?, action: (node: Node<T>) -> Unit) {
         var current = startNode
         while (current != null) {
@@ -47,14 +71,23 @@ class RawLinkedList<T> : MutableList<T> {
         }
     }
 
+    /**
+     * Iterates through each element's node of the list.
+     */
     inline fun forEachNode(action: (node: Node<T>) -> Unit) {
         forEachNodeStartingWith(head, action)
     }
 
+    /**
+     * Iterates through each element of the list.
+     */
     inline fun forEachForward(action: (value: T) -> Unit) {
         forEachNode { action(it.value) }
     }
 
+    /**
+     * Iterates through each element of the list in reversed direction.
+     */
     inline fun forEachNodeReversed(action: (value: Node<T>) -> Unit) {
         var current = tail
         while (current != null) {
@@ -81,10 +114,18 @@ class RawLinkedList<T> : MutableList<T> {
         return previousValue
     }
 
+    /**
+     * Returns a node at given [index].
+     *
+     * @throws IndexOutOfBoundsException if given [index] is negative or greater than the list's size.
+     */
     fun getNode(index: Int): Node<T> {
         return getNodeOrNull(index) ?: throw IndexOutOfBoundsException()
     }
 
+    /**
+     * Returns a node at given [index]. If given index is out of bounds, returns null.
+     */
     fun getNodeOrNull(index: Int): Node<T>? {
         var count = 0
         var current = head
@@ -101,6 +142,9 @@ class RawLinkedList<T> : MutableList<T> {
         return null
     }
 
+    /**
+     * Returns a first element's node matching given [predicate], or `null` if the list does not contain such element
+     */
     inline fun findFirstNode(predicate: (value: T) -> Boolean): Node<T>? {
         forEachNode { node ->
             if (predicate(node.value)) {
@@ -111,6 +155,9 @@ class RawLinkedList<T> : MutableList<T> {
         return null
     }
 
+    /**
+     * Returns a last element's node matching given [predicate], or `null` if the list does not contain such element
+     */
     inline fun findLastNode(predicate: (value: T) -> Boolean): Node<T>? {
         forEachNodeReversed { node ->
             if (predicate(node.value)) {
@@ -121,6 +168,9 @@ class RawLinkedList<T> : MutableList<T> {
         return null
     }
 
+    /**
+     * Returns a first element's node that is equal to the given [value].
+     */
     fun findFirstNode(value: T): Node<T>? {
         return findFirstNode { it == value }
     }
@@ -201,6 +251,9 @@ class RawLinkedList<T> : MutableList<T> {
         return elements.isNotEmpty()
     }
 
+    /**
+     * Inserts given [element] before specified [node]. The [node] must be in the list.
+     */
     fun insertBeforeNode(element: T, node: Node<T>): Node<T> {
         val newNode = Node(element)
 
@@ -221,6 +274,9 @@ class RawLinkedList<T> : MutableList<T> {
         return newNode
     }
 
+    /**
+     * Inserts given [element] after specified [node]. The [node] must be in the list.
+     */
     fun insertAfterNode(element: T, node: Node<T>): Node<T> {
         val nextNode = node.next
         val newNode = Node(element)
@@ -269,10 +325,18 @@ class RawLinkedList<T> : MutableList<T> {
         } ?: false
     }
 
+    /**
+     * Removes given [node] from the list. This node must be in the list.
+     */
     fun removeNode(node: Node<T>) {
         removeBetween(node, node)
     }
 
+    /**
+     * Removes elements starting from [startNode], ending with [endNode].
+     *
+     * Both nodes must be in the list. [startNode] must precede [endNode] or be equal to it.
+     */
     fun removeBetween(startNode: Node<T>, endNode: Node<T>) {
         _size -= countBetweenNodes(startNode, endNode)
 
@@ -292,6 +356,13 @@ class RawLinkedList<T> : MutableList<T> {
         }
     }
 
+    /**
+     * Replaces elements between [startNode] and [endNode] with specified [value].
+     *
+     * In other words, it removes elements between [startNode] and [endNode],
+     * and inserts a new node with [value] after [startNode]'s previous node.
+     * If [startNode] does not have a previous node, a new node is set to be head.
+     */
     fun replaceBetweenWith(value: T, startNode: Node<T>, endNode: Node<T>) {
         _size -= countBetweenNodes(startNode, endNode) - 1
 
@@ -314,12 +385,20 @@ class RawLinkedList<T> : MutableList<T> {
         return node.value
     }
 
+    /**
+     * Returns a shallow copy of the list: it copies only nodes, but references the same values.
+     */
     fun copyOf(): RawLinkedList<T> {
         val h = head ?: return RawLinkedList()
 
         return copyOfBetween(h, _tail!!)
     }
 
+    /**
+     * Returns a shallow of the list between given two nodes: it copies only nodes, but references the same values.
+     *
+     * [startNode] and [endNode] must be in the list. [startNode] must precede [endNode] or be equal to it.
+     */
     fun copyOfBetween(startNode: Node<T>, endNode: Node<T>): RawLinkedList<T> {
         if (startNode === endNode) {
             val n = Node(startNode.value)
@@ -421,6 +500,9 @@ class RawLinkedList<T> : MutableList<T> {
     }
 
     companion object {
+        /**
+         * Returns amount of elements between given two nodes.
+         */
         private fun <T> countBetweenNodes(start: Node<T>, end: Node<T>): Int {
             var count = 0
             var current: Node<T>? = start
