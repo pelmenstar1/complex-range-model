@@ -57,7 +57,7 @@ class RawLinkedList<T> : MutableList<T> {
     }
 
     override fun isEmpty(): Boolean {
-        return _head == null
+        return _size == 0
     }
 
     /**
@@ -65,9 +65,13 @@ class RawLinkedList<T> : MutableList<T> {
      */
     inline fun forEachNodeStartingWith(startNode: Node<T>?, action: (node: Node<T>) -> Unit) {
         var current = startNode
-        while (current != null) {
+        val s = size
+        var i = 0
+
+        while (current != null && i < s) {
             action(current)
             current = current.next
+            i++
         }
     }
 
@@ -90,9 +94,12 @@ class RawLinkedList<T> : MutableList<T> {
      */
     inline fun forEachNodeReversed(action: (value: Node<T>) -> Unit) {
         var current = tail
-        while (current != null) {
+        var i = size - 1
+
+        while (current != null && i >= 0) {
             action(current)
             current = current.previous
+            i--
         }
     }
 
@@ -128,15 +135,13 @@ class RawLinkedList<T> : MutableList<T> {
      */
     fun getNodeOrNull(index: Int): Node<T>? {
         var count = 0
-        var current = head
 
-        while (current != null) {
+        forEachNode { node ->
             if (count == index) {
-                return current
+                return node
             }
 
             count++
-            current = current.next
         }
 
         return null
@@ -287,7 +292,7 @@ class RawLinkedList<T> : MutableList<T> {
         newNode.previous = node
         node.next = newNode
 
-        if (node === tail) {
+        if (node === _tail) {
             _tail = newNode
         }
 
@@ -343,16 +348,16 @@ class RawLinkedList<T> : MutableList<T> {
         val startNodePrev = startNode.previous
         val endNodeNext = endNode.next
 
-        if (startNodePrev == null) {
-            _head = endNode.next
+        if (startNode === _head) {
+            _head = endNodeNext
         } else {
-            startNodePrev.next = endNode.next
+            startNodePrev?.next = endNodeNext
         }
 
-        if (endNodeNext == null) {
+        if (endNode === _tail) {
             _tail = startNodePrev
         } else {
-            endNodeNext.previous = startNodePrev
+            endNodeNext?.previous = startNodePrev
         }
     }
 
@@ -371,10 +376,10 @@ class RawLinkedList<T> : MutableList<T> {
         startNode.value = value
         startNode.next = endNodeNext
 
-        if (endNodeNext == null) {
+        if (endNode === _tail) {
             _tail = startNode
         } else {
-            endNodeNext.previous = startNode
+            endNodeNext?.previous = startNode
         }
     }
 
@@ -389,46 +394,21 @@ class RawLinkedList<T> : MutableList<T> {
      * Returns a shallow copy of the list: it copies only nodes, but references the same values.
      */
     fun copyOf(): RawLinkedList<T> {
-        val h = head ?: return RawLinkedList()
+        val startNode = _head ?: return RawLinkedList()
 
-        return copyOfBetween(h, _tail!!)
-    }
-
-    /**
-     * Returns a shallow of the list between given two nodes: it copies only nodes, but references the same values.
-     *
-     * [startNode] and [endNode] must be in the list. [startNode] must precede [endNode] or be equal to it.
-     */
-    fun copyOfBetween(startNode: Node<T>, endNode: Node<T>): RawLinkedList<T> {
-        if (startNode === endNode) {
-            val n = Node(startNode.value)
-
-            return RawLinkedList(n, n, size = 1)
-        }
-
-        var index = 1 // We already added the head.
         val newHead = Node(startNode.value)
         var newCurrent = newHead
 
-        var current: Node<T>? = startNode.next
-
-        while (current != null) {
+        forEachNodeStartingWith(startNode.next) { current ->
             val newNode = Node(current.value).apply {
                 previous = newCurrent
             }
 
             newCurrent.next = newNode
             newCurrent = newNode
-            index++
-
-            if (current === endNode) {
-                return RawLinkedList(newHead, newCurrent, size = index)
-            }
-
-            current = current.next
         }
 
-        throw IllegalStateException("Start and end nodes are not linked")
+        return RawLinkedList(newHead, newCurrent, _size)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -436,23 +416,28 @@ class RawLinkedList<T> : MutableList<T> {
             return false
         }
 
-        var current = head
-        var otherCurrent = other.head
+        val s = _size
+        if (s != other._size) {
+            return false
+        }
 
-        while (true) {
-            if (current == null && otherCurrent == null) {
-                return true
-            } else if (current == null || otherCurrent == null) {
-                return false
-            }
+        var current = _head
+        var otherCurrent = other._head
 
+        var i = 0
+
+        while (current != null && otherCurrent != null && i < s) {
             if (current.value != otherCurrent.value) {
                 return false
             }
 
             current = current.next
             otherCurrent = otherCurrent.next
+
+            i++
         }
+
+        return true
     }
 
     override fun hashCode(): Int {
@@ -482,6 +467,10 @@ class RawLinkedList<T> : MutableList<T> {
     }
 
     override fun subList(fromIndex: Int, toIndex: Int): RawLinkedList<T> {
+        if (fromIndex > toIndex) {
+            throw IndexOutOfBoundsException()
+        }
+
         val startNode = getNode(fromIndex)
         val endNode = getNode(toIndex - 1)
         val newSize = toIndex - fromIndex
@@ -508,7 +497,7 @@ class RawLinkedList<T> : MutableList<T> {
             var current: Node<T>? = start
 
             while (current != null) {
-                if (current == end) {
+                if (current === end) {
                     return count + 1
                 }
 
@@ -521,14 +510,14 @@ class RawLinkedList<T> : MutableList<T> {
     }
 
     private inner class ListIteratorImpl(
-        startNode: Node<T>?
+        startNode: Node<T>?,
     ) : MutableListIterator<T> {
         private var lastReturnedNode: Node<T>? = null
         private var nextNode: Node<T>? = startNode
         private var nextIndex = 0
 
         override fun hasNext(): Boolean {
-            return nextNode != null
+            return nextIndex < _size
         }
 
         override fun hasPrevious(): Boolean {
@@ -536,7 +525,13 @@ class RawLinkedList<T> : MutableList<T> {
         }
 
         override fun next(): T {
-            val nn = nextNode ?: throw NoSuchElementException()
+            // If tail is null, then the list is empty which means there's no next element
+            val t = _tail ?: throw NoSuchElementException()
+
+            val nn = nextNode
+            if (nn == null || nn === t.next) {
+                throw NoSuchElementException()
+            }
 
             lastReturnedNode = nn
             nextNode = nn.next
@@ -546,8 +541,11 @@ class RawLinkedList<T> : MutableList<T> {
         }
 
         override fun previous(): T {
+            // If tail is null, then the list is empty which means there's no next element
+            val t = _tail ?: throw NoSuchElementException()
+
             val nn = nextNode
-            val l = if (nn == null) _tail else nn.previous
+            val l = if (nn == null || nn === t.next) t else nn.previous
 
             if (l == null) {
                 throw NoSuchElementException()
@@ -567,7 +565,9 @@ class RawLinkedList<T> : MutableList<T> {
             lastReturnedNode = null
 
             val next = nextNode
-            if (next == null) {
+            val t = _tail
+
+            if (next == null || t == null || next === t.next) {
                 this@RawLinkedList.add(element)
             } else {
                 insertBeforeNode(element, next)
@@ -578,14 +578,12 @@ class RawLinkedList<T> : MutableList<T> {
 
         override fun remove() {
             val lastReturned = lastReturnedNode
-
             checkNotNull(lastReturned)
 
-            val lastNext = lastReturned.next
             removeNode(lastReturned)
 
             if (nextNode === lastReturned) {
-                nextNode = lastNext
+                nextNode = lastReturned.next
             } else {
                 nextIndex--
             }

@@ -5,8 +5,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
 abstract class BaseListIteratorTests<T> {
+    class SubListData<T>(val elements: Array<T>, val subRange: IntRange)
+
     abstract fun createIterator(elements: Array<T>): MutableListIterator<T>
     abstract fun iterateForwardBackwardDataset(): List<Array<T>>
+
+    abstract fun iterateSubListForwardBackwardDataset(): List<SubListData<T>>
+    abstract fun createSubIterator(elements: Array<T>, subRange: IntRange): MutableListIterator<T>
 
     private fun forwardIteratorTest(iter: ListIterator<T>, expectedValues: Array<T>) {
         var index = 0
@@ -51,6 +56,18 @@ abstract class BaseListIteratorTests<T> {
             val iter = createIterator(data)
 
             iteratorTestHelper(iter, data)
+        }
+    }
+
+    @Test
+    fun iterateSubListForwardBackwardTest() {
+        for (data in iterateSubListForwardBackwardDataset()) {
+            val subRange = data.subRange
+
+            val iter = createSubIterator(data.elements, subRange)
+            val expectedElements = data.elements.copyOfRange(subRange.first, subRange.last + 1)
+
+            iteratorTestHelper(iter, expectedElements)
         }
     }
 }

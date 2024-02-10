@@ -9,6 +9,16 @@ class RawLinkedListTests {
         }
     }
 
+    private fun createSubList(values: IntArray): RawLinkedList<Int> {
+        val list = RawLinkedList<Int>().apply {
+            add(Int.MIN_VALUE)
+            values.forEach { add(it) }
+            add(Int.MAX_VALUE)
+        }
+
+        return list.subList(1, list.size - 1)
+    }
+
     @Test
     fun sizeTest() {
         fun testCase(values: IntArray) {
@@ -251,6 +261,24 @@ class RawLinkedListTests {
     }
 
     @Test
+    fun subListTest() {
+        fun testCase(elements: IntArray, subRange: IntRange) {
+            val list = createList(elements)
+
+            val subElements = elements.copyOfRange(subRange.first, subRange.last + 1)
+            val subList = list.subList(subRange.first, subRange.last + 1)
+
+            validateList(subList, subElements)
+        }
+
+        testCase(elements = intArrayOf(1, 2, 3), subRange = 1..1)
+        testCase(elements = intArrayOf(1, 2, 3), subRange = 0..1)
+        testCase(elements = intArrayOf(1, 2, 3), subRange = 1..2)
+        testCase(elements = intArrayOf(1, 2, 3, 4), subRange = 1..2)
+        testCase(elements = intArrayOf(1, 2, 3, 4), subRange = 1..3)
+    }
+
+    @Test
     fun equalsTest() {
         fun testCase(firstElements: IntArray, secondElements: IntArray, expected: Boolean) {
             val firstList = createList(firstElements)
@@ -305,15 +333,11 @@ class RawLinkedListTests {
 
         assertNotNull(head)
         assertNotNull(tail)
-        assertNull(head.previous)
-        assertNull(tail.next)
 
         var index = 0
+        var previous: RawLinkedList.Node<Int>? = head.previous
 
-        var previous: RawLinkedList.Node<Int>? = null
-        var current: RawLinkedList.Node<Int>? = head
-
-        while (current != null) {
+        list.forEachNode { current ->
             val expectedValue = expectedElements[index]
             val actualValue = current.value
 
@@ -322,7 +346,6 @@ class RawLinkedListTests {
 
             index++
             previous = current
-            current = current.next
         }
 
         assertSame(tail, previous)

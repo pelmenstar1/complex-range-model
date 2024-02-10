@@ -131,13 +131,9 @@ private class RawLinkedFragmentList<T : FragmentElement<T>>(
                 throw IllegalStateException("Current element's index is less than the marked node index")
             }
 
-            // ComplexRange is immutable, so we shouldn't copy all the list.
-            // But some logic in RawLinkedList relies on the fact that head.previous is null and tail.next is null
-            val subList = list.copyOfBetween(startNode, endNode)
-
+            val subList = RawLinkedList(startNode, endNode, subSize)
             return GenericComplexRange(subList)
         }
-
     }
 }
 
