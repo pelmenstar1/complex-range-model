@@ -129,7 +129,11 @@ sealed interface TransitionOperation<T : FragmentElement<T>> {
         val origin: RangeFragment<T>,
         val destination: ComplexRange<T>
     ) : TransitionOperation<T> {
-        // TODO: Add validation that origin completely contains destination
+        init {
+            require(isFragmentCompletelyContainsComplexRange(origin, destination)) {
+                "Origin fragment should completely contains destination complex range"
+            }
+        }
 
         override fun reversed(): TransitionOperation<T> = Join(destination, origin)
 
@@ -154,6 +158,12 @@ sealed interface TransitionOperation<T : FragmentElement<T>> {
         val origin: ComplexRange<T>,
         val destination: RangeFragment<T>
     ) : TransitionOperation<T> {
+        init {
+            require(isFragmentCompletelyContainsComplexRange(destination, origin)) {
+                "Destination fragment should completely contains origin complex range"
+            }
+        }
+
         override fun reversed(): TransitionOperation<T> = Split(destination, origin)
 
         override fun efficiencyLevel(): Int {
@@ -161,6 +171,19 @@ sealed interface TransitionOperation<T : FragmentElement<T>> {
 
             // originElementCount must be lesser than destination.elementCount
             return destination.elementCount - originElementCount
+        }
+    }
+
+    companion object {
+        private fun<T : FragmentElement<T>> isFragmentCompletelyContainsComplexRange(
+            outerFrag: RangeFragment<T>,
+            complexRange: ComplexRange<T>
+        ): Boolean {
+            val frags = complexRange.fragments()
+
+            // Check only first and last of fragments of the ComplexRange because ranges in the ComplexRange is ordered in
+            // ascending order.
+            return frags.first().start == outerFrag.start && frags.last().endInclusive == outerFrag.endInclusive
         }
     }
 }
