@@ -4,6 +4,8 @@ import com.github.pelmenstar1.complexRangeModel.FragmentElement
 import com.github.pelmenstar1.complexRangeModel.RangeFragment
 import com.github.pelmenstar1.complexRangeModel.RawLinkedList
 
+private typealias FragmentNode<T> = RawLinkedList.Node<RangeFragment<T>>
+
 internal abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
     protected val fragments: RawLinkedList<RangeFragment<T>>
 
@@ -13,6 +15,142 @@ internal abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
 
     protected constructor(fragments: RawLinkedList<RangeFragment<T>>) {
         this.fragments = fragments
+    }
+
+    protected fun includeValue(newValue: T): FragmentNode<T> {
+        fragments.forEachNode { node ->
+            tryIncludeValueFromNodeForward(newValue, node)?.let {
+                return it
+            }
+        }
+
+        return fragments.addAndReturnNode(RangeFragment(newValue, newValue))
+    }
+
+    private fun tryIncludeValueFromNodeBase(newValue: T, node: FragmentNode<T>): FragmentNode<T>? {
+        val frag = node.value
+
+        return when {
+            // Bail out. The complex range already contains this value.
+            frag.contains(newValue) -> node
+            frag.isAdjacentLeft(newValue) -> uniteWithValueRight(newValue, node)
+            frag.isAdjacentRight(newValue) -> uniteWithValueLeft(newValue, node)
+            else -> null
+        }
+    }
+
+    private fun tryIncludeValueFromNodeForward(newValue: T, node: FragmentNode<T>): FragmentNode<T>? {
+        var result = tryIncludeValueFromNodeBase(newValue, node)
+        if (result == null && newValue < node.value.start) {
+            result = fragments.insertBeforeNode(RangeFragment(newValue, newValue), node)
+        }
+
+        return result
+    }
+
+    private fun tryIncludeValueFromNodeBackward(newValue: T, node: FragmentNode<T>): FragmentNode<T>? {
+        var result = tryIncludeValueFromNodeBase(newValue, node)
+        if (result == null && newValue > node.value.endInclusive) {
+            result = fragments.insertAfterNode(RangeFragment(newValue, newValue), node)
+        }
+
+        return result
+    }
+
+    private fun includeValueWithAnchor(newValue: T, anchorNode: FragmentNode<T>): FragmentNode<T> {
+        val anchorFrag = anchorNode.value
+
+        tryIncludeValueFromNodeBase(newValue, anchorNode)?.let {
+            return it
+        }
+
+        // If we can't include a newValue using anchorNode, then newValue is either before or after anchorFrag
+        // (but not inside)
+
+        if (newValue < anchorFrag.start) {
+            fragments.forEachNodeReversedStartingWith(anchorNode.previous) { node ->
+                tryIncludeValueFromNodeBackward(newValue, node)?.let {
+                    return it
+                }
+            }
+
+            return fragments.insertFirst(RangeFragment(newValue, newValue))
+        } else {
+            // Then newValue is after anchorFrag.
+
+            fragments.forEachNodeStartingWith(anchorNode.next) { node ->
+                tryIncludeValueFromNodeForward(newValue, node)?.let {
+                    return it
+                }
+            }
+
+            return fragments.addAndReturnNode(RangeFragment(newValue, newValue))
+        }
+    }
+
+    private fun uniteWithValueRight(newValue: T, currentNode: FragmentNode<T>): FragmentNode<T> {
+        val frag = currentNode.value
+        val nextNode = currentNode.next
+
+        if (nextNode != null) {
+            val nextFrag = nextNode.value
+
+            if (nextFrag.isAdjacentRight(newValue)) {
+                val newFrag = RangeFragment(frag.start, nextFrag.endInclusive)
+                fragments.replaceBetweenWith(newFrag, currentNode, nextNode)
+
+                return currentNode
+            }
+        }
+
+        currentNode.value = RangeFragment(frag.start, newValue)
+        return currentNode
+    }
+
+    private fun uniteWithValueLeft(newValue: T, currentNode: FragmentNode<T>): FragmentNode<T> {
+        val frag = currentNode.value
+        val prevNode = currentNode.previous
+
+        if (prevNode != null) {
+            val prevFrag = prevNode.value
+
+            if (prevFrag.isAdjacentLeft(newValue)) {
+                val newFrag = RangeFragment(prevFrag.start, frag.endInclusive)
+                fragments.replaceBetweenWith(newFrag, prevNode, currentNode)
+
+                return prevNode
+            }
+        }
+
+        currentNode.value = RangeFragment(newValue, frag.endInclusive)
+        return currentNode
+    }
+
+    protected fun includeValues(values: Array<out T>) {
+        var i = 0
+
+        includeValues(hasNext = { i < values.size }, next = { values[i++] })
+    }
+
+    protected fun includeValues(values: Iterable<T>) {
+        val iter = values.iterator()
+
+        includeValues(iter::hasNext, iter::next)
+    }
+
+    private inline fun includeValues(
+        hasNext: () -> Boolean,
+        next: () -> T
+    ) {
+        if (!hasNext()) {
+            return
+        }
+
+        var lastNode = includeValue(next())
+
+        while (hasNext()) {
+            lastNode = includeValueWithAnchor(next(), lastNode)
+        }
     }
 
     protected fun includeFragment(fragment: RangeFragment<T>) {
@@ -47,7 +185,7 @@ internal abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
     private fun includeFragmentWithUniting(
         minElement: T,
         initialMaxElement: T,
-        startNode: RawLinkedList.Node<RangeFragment<T>>
+        startNode: FragmentNode<T>
     ) {
         var maxElement = initialMaxElement
 
@@ -92,7 +230,7 @@ internal abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
 
     private fun excludeFragmentWithOneAffected(
         excludeFragment: RangeFragment<T>,
-        affectedNode: RawLinkedList.Node<RangeFragment<T>>
+        affectedNode: FragmentNode<T>
     ) {
         val affectedFragment = affectedNode.value
 
@@ -127,8 +265,8 @@ internal abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
 
     private fun excludeFragmentWithRangeAffected(
         excludeFragment: RangeFragment<T>,
-        affectedStartNode: RawLinkedList.Node<RangeFragment<T>>,
-        affectedEndNode: RawLinkedList.Node<RangeFragment<T>>
+        affectedStartNode: FragmentNode<T>,
+        affectedEndNode: FragmentNode<T>
     ) {
         val affectedStartFrag = affectedStartNode.value
         val affectedEndFrag = affectedEndNode.value
@@ -180,7 +318,7 @@ internal abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
     }
 
     private fun splitFragmentWithExcludingOtherFragment(
-        splitNode: RawLinkedList.Node<RangeFragment<T>>,
+        splitNode: FragmentNode<T>,
         excludeFragment: RangeFragment<T>
     ) {
         // Range in splitNode: [] [] [] [] [] []
@@ -198,11 +336,11 @@ internal abstract class GenericComplexRangeBaseBuilder<T : FragmentElement<T>> {
         fragments.insertAfterNode(splitFragment.withStart(excludeFragment.endExclusive), splitNode)
     }
 
-    private fun findFirstOverlapFragmentNode(fragment: RangeFragment<T>): RawLinkedList.Node<RangeFragment<T>>? {
+    private fun findFirstOverlapFragmentNode(fragment: RangeFragment<T>): FragmentNode<T>? {
         return fragments.findFirstNode { fragment.overlapsWith(it) }
     }
 
-    private fun findLastOverlapFragmentNode(fragment: RangeFragment<T>): RawLinkedList.Node<RangeFragment<T>>? {
+    private fun findLastOverlapFragmentNode(fragment: RangeFragment<T>): FragmentNode<T>? {
         return fragments.findLastNode { fragment.overlapsWith(it) }
     }
 }

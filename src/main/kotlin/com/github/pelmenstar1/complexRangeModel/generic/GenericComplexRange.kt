@@ -143,6 +143,18 @@ internal class GenericComplexRangeBuilder<T : FragmentElement<T>> : GenericCompl
         includeFragment(value)
     }
 
+    override fun value(v: T) {
+        includeValue(v)
+    }
+
+    override fun values(vs: Array<out T>) {
+        includeValues(vs)
+    }
+
+    override fun values(vs: Iterable<T>) {
+        includeValues(vs)
+    }
+
     fun build(): ComplexRange<T> {
         return GenericComplexRange(fragments)
     }

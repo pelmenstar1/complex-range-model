@@ -65,13 +65,16 @@ class RawLinkedList<T> : MutableList<T> {
      */
     inline fun forEachNodeStartingWith(startNode: Node<T>?, action: (node: Node<T>) -> Unit) {
         var current = startNode
-        val s = size
-        var i = 0
+        val t = tail
 
-        while (current != null && i < s) {
+        while (current != null) {
             action(current)
+
+            if (current === t) {
+                break
+            }
+
             current = current.next
-            i++
         }
     }
 
@@ -93,13 +96,24 @@ class RawLinkedList<T> : MutableList<T> {
      * Iterates through each element of the list in reversed direction.
      */
     inline fun forEachNodeReversed(action: (value: Node<T>) -> Unit) {
-        var current = tail
-        var i = size - 1
+        forEachNodeReversedStartingWith(tail, action)
+    }
 
-        while (current != null && i >= 0) {
+    /**
+     * Iterates through each element of the list in reversed direction.
+     */
+    inline fun forEachNodeReversedStartingWith(startNode: Node<T>?, action: (value: Node<T>) -> Unit) {
+        var current = startNode
+        val h = head
+
+        while (current != null) {
             action(current)
+
+            if (current === h) {
+                break
+            }
+
             current = current.previous
-            i--
         }
     }
 
@@ -216,6 +230,11 @@ class RawLinkedList<T> : MutableList<T> {
     }
 
     override fun add(element: T): Boolean {
+        addAndReturnNode(element)
+        return true
+    }
+
+    fun addAndReturnNode(element: T): Node<T> {
         val newNode = Node(element)
         val t = tail
 
@@ -231,7 +250,7 @@ class RawLinkedList<T> : MutableList<T> {
 
         _size++
 
-        return true
+        return newNode
     }
 
     override fun add(index: Int, element: T) {
@@ -295,6 +314,20 @@ class RawLinkedList<T> : MutableList<T> {
         if (node === _tail) {
             _tail = newNode
         }
+
+        _size++
+
+        return newNode
+    }
+
+    fun insertFirst(value: T): Node<T> {
+        val newNode = Node(value)
+        val h = _head
+
+        newNode.next = h
+        h?.previous = newNode
+
+        _head = newNode
 
         _size++
 

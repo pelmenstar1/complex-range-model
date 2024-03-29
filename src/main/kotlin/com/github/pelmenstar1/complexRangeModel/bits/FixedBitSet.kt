@@ -11,6 +11,14 @@ internal class FixedBitSet {
         this.words = words
     }
 
+    fun set(index: Int) {
+        setMask(getWordIndex(index), mask = 1L shl index)
+    }
+
+    fun setMask(wordIndex: Int, mask: Long) {
+        words[wordIndex] = words[wordIndex] or mask
+    }
+
     fun set(startIndex: Int, endIndex: Int) {
         val startWordIndex = getWordIndex(startIndex)
         val endWordIndex = getWordIndex(endIndex)
@@ -18,13 +26,13 @@ internal class FixedBitSet {
         if (startWordIndex == endWordIndex) {
             val mask = rangeMask(getInWordBitIndex(startIndex), getInWordBitIndex(endIndex))
 
-            words[startWordIndex] = words[startWordIndex] or mask
+            setMask(startWordIndex, mask)
         } else {
-            val firstMask = WORD_MASK shl startIndex
-            val lastMask = WORD_MASK ushr (-endIndex - 1)
+            val startMask = WORD_MASK shl startIndex
+            val endMask = WORD_MASK ushr (-endIndex - 1)
 
-            words[startWordIndex] = words[startWordIndex] or firstMask
-            words[endWordIndex] = words[endWordIndex] or lastMask
+            setMask(startWordIndex, startMask)
+            setMask(endWordIndex, endMask)
 
             for (i in (startWordIndex + 1) until endWordIndex) {
                 words[i] = WORD_MASK
