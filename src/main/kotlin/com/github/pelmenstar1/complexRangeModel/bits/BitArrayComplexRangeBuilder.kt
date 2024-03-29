@@ -4,8 +4,7 @@ import com.github.pelmenstar1.complexRangeModel.*
 import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
 import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRange
 
-@PublishedApi // For the builder method.
-internal class BitArrayComplexRangeBuilder(private val limitStart: Int, private val limitEnd: Int) : ComplexRangeBuilder<IntFragmentElement> {
+class BitArrayComplexRangeBuilder(private val limitStart: Int, private val limitEnd: Int) : ComplexRangeBuilder<IntFragmentElement> {
     private val bitSet = FixedBitSet(limitEnd - limitStart + 1)
 
     override fun fragment(value: IntRangeFragment) {
@@ -27,21 +26,33 @@ internal class BitArrayComplexRangeBuilder(private val limitStart: Int, private 
     override fun values(vs: Array<out IntFragmentElement>) {
         var i = 0
 
-        addValuesInternal(hasNext = { i < vs.size }, next = { vs[i++] })
+        addValuesInternal(hasNext = { i < vs.size }, next = { vs[i++].value })
     }
 
     override fun values(vs: Iterable<IntFragmentElement>) {
         val iter = vs.iterator()
 
+        addValuesInternal(iter::hasNext, next = { iter.next().value })
+    }
+
+    fun valuesDirect(vs: IntArray) {
+        var i = 0
+
+        addValuesInternal(hasNext = { i < vs.size }, next = { vs[i++] })
+    }
+
+    fun valuesDirect(vs: Iterable<Int>) {
+        val iter = vs.iterator()
+
         addValuesInternal(iter::hasNext, iter::next)
     }
 
-    private inline fun addValuesInternal(hasNext: () -> Boolean, next: () -> IntFragmentElement) {
+    private inline fun addValuesInternal(hasNext: () -> Boolean, next: () -> Int) {
         var currentWordMask = 0L
         var currentWordIndex = -1
 
         while(hasNext()) {
-            val value = next().value
+            val value = next()
             ensureValidValue(value)
 
             val bitIndex = value - limitStart

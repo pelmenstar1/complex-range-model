@@ -46,7 +46,7 @@ fun <T : FragmentElement<T>> ComplexRange(vs: Array<out T>): ComplexRange<T> {
 inline fun BitIntComplexRange(
     limitStart: Int,
     limitEnd: Int,
-    block: ComplexRangeBuilder<IntFragmentElement>.() -> Unit
+    block: BitArrayComplexRangeBuilder.() -> Unit
 ): IntComplexRange {
     return BitArrayComplexRangeBuilder(limitStart, limitEnd).also(block).build()
 }
