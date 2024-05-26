@@ -14,6 +14,21 @@ abstract class BaseComplexRangeTests {
     }
 
     @Test
+    fun includesTest() {
+        fun testCase(fragments: Array<IntRange>, targetRange: IntRange, expected: Boolean) {
+            val complexRange = createComplexRange(fragments)
+            val actual = complexRange.fragments().includes(IntRangeFragment(targetRange))
+
+            assertEquals(expected, actual)
+        }
+
+        testCase(fragments = arrayOf(1..3), targetRange = 1..3, expected = true)
+        testCase(fragments = arrayOf(1..5), targetRange = 2..4, expected = true)
+        testCase(fragments = arrayOf(1..3, 5..6), targetRange = 8..9, expected = false)
+        testCase(fragments = arrayOf(3..5), targetRange = 2..3, expected = false)
+    }
+
+    @Test
     fun toStringTest() {
         fun testCase(fragmentRanges: Array<IntRange>, expectedResult: String) {
             val range = createComplexRange(fragmentRanges)

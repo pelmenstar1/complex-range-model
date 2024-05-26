@@ -63,6 +63,10 @@ private class RawLinkedFragmentList<T : FragmentElement<T>>(
     override fun contains(element: RangeFragment<T>): Boolean = list.contains(element)
     override fun containsAll(elements: Collection<RangeFragment<T>>): Boolean = list.containsAll(elements)
 
+    override fun includes(fragment: RangeFragment<T>): Boolean {
+        return list.anyElement { it.containsCompletely(fragment) }
+    }
+
     override fun indexOf(element: RangeFragment<T>): Int = list.indexOf(element)
     override fun lastIndexOf(element: RangeFragment<T>): Int = list.lastIndexOf(element)
 

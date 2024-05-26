@@ -1,8 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel
 
-import com.github.pelmenstar1.complexRangeModel.bits.BitArrayComplexRangeBuilder
 import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRange
-import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRangeBuilder
 import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRangeModify
 
 /**
@@ -65,6 +63,21 @@ private object EmptyComplexRangeFragmentListIterator : ComplexRangeFragmentListI
  * Represents a list of [RangeFragment] that is specialized for use in [ComplexRange].
  */
 interface ComplexRangeFragmentList<T : FragmentElement<T>> : List<RangeFragment<T>> {
+    /**
+     * Determines whether the list contains all elements from given [fragment].
+     *
+     * It differs from `fragments().contains(fragment)` in that `contains` tries to find the exact match.
+     * So that:
+     * ```kotlin
+     * var complexRange = ComplexRange(arrayOf(1..5))
+     * complexRange.fragments().contains(IntRangeFragment(2..4)) // = false
+     * complexRange.includes(IntRangeFragment(2..4)) // = true
+     * ```
+     */
+    fun includes(fragment: RangeFragment<T>): Boolean {
+        return any { it.containsCompletely(fragment) }
+    }
+
     /**
      * Returns the last fragment of the list, if the list is not empty.
      *

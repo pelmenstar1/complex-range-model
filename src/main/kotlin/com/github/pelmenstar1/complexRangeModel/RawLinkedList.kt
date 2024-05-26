@@ -117,6 +117,16 @@ class RawLinkedList<T> : MutableList<T> {
         }
     }
 
+    inline fun anyElement(predicate: (T) -> Boolean): Boolean {
+        forEachForward {
+            if (predicate(it)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     override fun clear() {
         _head = null
         _tail = null
