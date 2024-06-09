@@ -1,7 +1,9 @@
 package com.github.pelmenstar1.complexRangeModel
 
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 private typealias FragmentIterator = ComplexRangeFragmentListIterator<IntFragmentElement>
 
@@ -48,7 +50,92 @@ abstract class BaseComplexRangeFragmentListIteratorTests {
         }
 
         testCase(arrayOf(1..2))
+        testCase(arrayOf(0..2))
+        testCase(arrayOf(0..63))
+        testCase(arrayOf(0..127))
         testCase(arrayOf(1..2, 4..5))
+        testCase(arrayOf(0..2, 4..5))
         testCase(arrayOf(1..2, 4..5, 7..8))
+        testCase(arrayOf(0..2, 4..5, 7..8, 40..63))
+    }
+
+    @Test
+    fun iterateNextPreviousForwardTest() {
+        fun testCase(elements: Array<IntRange>) {
+            val expectedFragments = elements.mapToArray { IntRangeFragment(it) }
+
+            val iter = createIterator(expectedFragments)
+            var index = 1
+
+            iter.moveNext()
+
+            while(true) {
+                val moveNextRes = iter.moveNext()
+
+                if(!moveNextRes) {
+                    break
+                }
+
+                val currentElement1 = iter.current
+                val expectedElement1 = IntRangeFragment(elements[index])
+                assertEquals(expectedElement1, currentElement1)
+
+                val movePrevRes = iter.movePrevious()
+                assertTrue(movePrevRes)
+
+                val currentElement2 = iter.current
+                val expectedElement2 = IntRangeFragment(elements[index - 1])
+                assertEquals(expectedElement2, currentElement2)
+
+                val moveNextRes2 = iter.moveNext()
+                assertTrue(moveNextRes2)
+
+                val currentElement3 = iter.current
+                assertEquals(expectedElement1, currentElement3)
+
+                index++
+            }
+
+            assertEquals(elements.size, index)
+        }
+
+        testCase(arrayOf(1..1, 3..6))
+        testCase(arrayOf(1..1, 3..3, 5..6))
+        testCase(arrayOf(1..1, 3..3, 5..5, 7..9))
+    }
+
+
+
+    @Test
+    fun subRangeTest() {
+        fun testCase(ranges: Array<IntRange>, subRangeIndices: IntRange) {
+            val fragments = ranges.mapToArray { IntRangeFragment(it) }
+            val iter = createIterator(fragments)
+
+            repeat(subRangeIndices.first + 1) {
+                iter.moveNext()
+            }
+            iter.mark()
+
+            repeat(subRangeIndices.count() - 1) {
+                iter.moveNext()
+            }
+
+            val subRange = iter.subRange()
+
+            val expectedSubFragments = fragments.sliceArray(subRangeIndices)
+            val actualSubFragments = subRange.fragments().toTypedArray()
+
+            assertContentEquals(expectedSubFragments, actualSubFragments)
+        }
+
+        testCase(ranges = arrayOf(1..2), subRangeIndices = 0..0)
+        testCase(ranges = arrayOf(1..2, 4..5), subRangeIndices = 0..0)
+        testCase(ranges = arrayOf(1..2, 4..5), subRangeIndices = 0..1)
+        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 0..0)
+        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 0..1)
+        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 1..1)
+        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 1..2)
+        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 0..2)
     }
 }

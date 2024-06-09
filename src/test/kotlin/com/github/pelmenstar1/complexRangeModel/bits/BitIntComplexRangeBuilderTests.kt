@@ -1,10 +1,15 @@
-package com.github.pelmenstar1.complexRangeModel
+package com.github.pelmenstar1.complexRangeModel.bits
 
+import com.github.pelmenstar1.complexRangeModel.*
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFailsWith
 
-class BitArrayComplexRangeBuildTests {
+class BitIntComplexRangeBuilderTests : BaseComplexRangeBuilderTests() {
+    override fun createComplexRange(block: ComplexRangeBuilder<IntFragmentElement>.() -> Unit): IntComplexRange {
+        return BitIntComplexRange(0, 100, block)
+    }
+
     @Test
     fun buildRangeTest() {
         fun testCase(limitRange: IntRange, fragments: Array<IntRange>, expectedFragments: Array<IntRange> = fragments) {

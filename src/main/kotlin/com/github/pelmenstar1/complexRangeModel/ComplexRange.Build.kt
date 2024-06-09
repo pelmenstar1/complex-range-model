@@ -1,6 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel
 
-import com.github.pelmenstar1.complexRangeModel.bits.BitArrayComplexRangeBuilder
+import com.github.pelmenstar1.complexRangeModel.bits.BitIntComplexRangeBuilder
 import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRangeBuilder
 
 /**
@@ -46,9 +46,9 @@ fun <T : FragmentElement<T>> ComplexRange(vs: Array<out T>): ComplexRange<T> {
 inline fun BitIntComplexRange(
     limitStart: Int,
     limitEnd: Int,
-    block: BitArrayComplexRangeBuilder.() -> Unit
+    block: BitIntComplexRangeBuilder.() -> Unit
 ): IntComplexRange {
-    return BitArrayComplexRangeBuilder(limitStart, limitEnd).also(block).build()
+    return BitIntComplexRangeBuilder(limitStart, limitEnd).also(block).build()
 }
 
 /**

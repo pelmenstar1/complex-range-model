@@ -6,11 +6,15 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class ComplexRangeTransitionManagerTests {
+abstract class BaseComplexRangeTransitionManagerTests {
+    protected abstract fun createComplexRange(ranges: List<IntRange>): IntComplexRange
+
+    private fun createEmptyComplexRange() = createComplexRange(emptyList())
+
     @Test
     fun createEmptyToEmptyTest() {
-        val origin = ComplexRange.empty<IntFragmentElement>()
-        val dest = ComplexRange.empty<IntFragmentElement>()
+        val origin = createEmptyComplexRange()
+        val dest = createEmptyComplexRange()
 
         val transition = createTransition(origin, dest)
 
@@ -19,8 +23,8 @@ class ComplexRangeTransitionManagerTests {
 
     @Test
     fun createEmptyToNonEmptyTest() {
-        val origin = ComplexRange.empty<IntFragmentElement>()
-        val dest = IntComplexRange(arrayOf(0..2, 4..5))
+        val origin = createEmptyComplexRange()
+        val dest = createComplexRange(listOf(0..2, 4..5))
         val actualTransition = createTransition(origin, dest)
 
         assertGroupsEquals(actualTransition) {
@@ -36,8 +40,8 @@ class ComplexRangeTransitionManagerTests {
 
     @Test
     fun createNonEmptyToEmptyTest() {
-        val origin = IntComplexRange(arrayOf(0..2, 4..5))
-        val dest = ComplexRange.empty<IntFragmentElement>()
+        val origin = createComplexRange(listOf(0..2, 4..5))
+        val dest = createEmptyComplexRange()
         val actualTransition = createTransition(origin, dest)
 
         assertGroupsEquals(actualTransition) {
@@ -52,13 +56,13 @@ class ComplexRangeTransitionManagerTests {
     }
 
     private fun transitionTestHelper(
-        origin: Array<IntRange>,
-        dest: Array<IntRange>,
+        origin: List<IntRange>,
+        dest: List<IntRange>,
         maxMoveDist: Int = -1,
         transitionBuild: TransitionBuilder<IntFragmentElement>.() -> Unit
     ) {
-        val originComplexRange = IntComplexRange(origin)
-        val destComplexRange = IntComplexRange(dest)
+        val originComplexRange = createComplexRange(origin)
+        val destComplexRange = createComplexRange(dest)
 
         val actualTransition = createTransition(originComplexRange, destComplexRange, maxMoveDist)
 
@@ -70,8 +74,8 @@ class ComplexRangeTransitionManagerTests {
         // Join + Transform
 
         transitionTestHelper(
-            origin = arrayOf(1..2, 4..5),
-            dest = arrayOf(2..4)
+            origin = listOf(1..2, 4..5),
+            dest = listOf(2..4)
         ) {
             group {
                 join(originRanges = arrayOf(1..2, 4..5), destRange = 1..5)
@@ -80,8 +84,8 @@ class ComplexRangeTransitionManagerTests {
         }
 
         transitionTestHelper(
-            origin = arrayOf(1..2, 4..4, 6..6),
-            dest = arrayOf(2..7)
+            origin = listOf(1..2, 4..4, 6..6),
+            dest = listOf(2..7)
         ) {
             group {
                 join(originRanges = arrayOf(1..2, 4..4, 6..6), destRange = 1..6)
@@ -90,8 +94,8 @@ class ComplexRangeTransitionManagerTests {
         }
 
         transitionTestHelper(
-            origin = arrayOf(1..1, 3..3),
-            dest = arrayOf(1..3)
+            origin = listOf(1..1, 3..3),
+            dest = listOf(1..3)
         ) {
             group {
                 join(originRanges = arrayOf(1..1, 3..3), destRange = 1..3)
@@ -101,8 +105,8 @@ class ComplexRangeTransitionManagerTests {
         // Join + Transform + Split
 
         transitionTestHelper(
-            origin = arrayOf(1..2, 4..11),
-            dest = arrayOf(2..4, 7..10)
+            origin = listOf(1..2, 4..11),
+            dest = listOf(2..4, 7..10)
         ) {
             group {
                 join(originRanges = arrayOf(1..2, 4..11), destRange = 1..11)
@@ -114,8 +118,8 @@ class ComplexRangeTransitionManagerTests {
         // Transform
 
         transitionTestHelper(
-            origin = arrayOf(1..2),
-            dest = arrayOf(2..3)
+            origin = listOf(1..2),
+            dest = listOf(2..3)
         ) {
             group {
                 transform(origin = 1..2, dest = 2..3)
@@ -124,16 +128,16 @@ class ComplexRangeTransitionManagerTests {
 
         // Ignore same fragments
         transitionTestHelper(
-            origin = arrayOf(1..2),
-            dest = arrayOf(1..2)
+            origin = listOf(1..2),
+            dest = listOf(1..2)
         ) {
         }
 
         // Transform + Split
 
         transitionTestHelper(
-            origin = arrayOf(1..5),
-            dest = arrayOf(2..2, 4..4)
+            origin = listOf(1..5),
+            dest = listOf(2..2, 4..4)
         ) {
             group {
                 transform(origin = 1..5, dest = 2..4)
@@ -144,8 +148,8 @@ class ComplexRangeTransitionManagerTests {
         // Remove + Insert
 
         transitionTestHelper(
-            origin = arrayOf(1..2),
-            dest = arrayOf(3..4)
+            origin = listOf(1..2),
+            dest = listOf(3..4)
         ) {
             group {
                 remove(1..2)
@@ -157,8 +161,8 @@ class ComplexRangeTransitionManagerTests {
         }
 
         transitionTestHelper(
-            origin = arrayOf(1..2),
-            dest = arrayOf(3..4)
+            origin = listOf(1..2),
+            dest = listOf(3..4)
         ) {
             group {
                 remove(1..2)
@@ -172,8 +176,8 @@ class ComplexRangeTransitionManagerTests {
         // Move
 
         transitionTestHelper(
-            origin = arrayOf(1..2),
-            dest = arrayOf(3..4),
+            origin = listOf(1..2),
+            dest = listOf(3..4),
             maxMoveDist = 1
         ) {
             group {
@@ -182,8 +186,8 @@ class ComplexRangeTransitionManagerTests {
         }
 
         transitionTestHelper(
-            origin = arrayOf(1..2),
-            dest = arrayOf(4..5),
+            origin = listOf(1..2),
+            dest = listOf(4..5),
             maxMoveDist = 0
         ) {
             group {
@@ -196,8 +200,8 @@ class ComplexRangeTransitionManagerTests {
         }
 
         transitionTestHelper(
-            origin = arrayOf(1..2),
-            dest = arrayOf(5..6),
+            origin = listOf(1..2),
+            dest = listOf(5..6),
             maxMoveDist = 1
         ) {
             group {
@@ -214,8 +218,8 @@ class ComplexRangeTransitionManagerTests {
     fun createNonEmptyToNonEmpty_multipleGroupsTest() {
         // Ignore same elements
         transitionTestHelper(
-            origin = arrayOf(1..2, 6..7),
-            dest = arrayOf(2..3, 6..7)
+            origin = listOf(1..2, 6..7),
+            dest = listOf(2..3, 6..7)
         ) {
             group {
                 transform(origin = 1..2, dest = 2..3)
@@ -223,8 +227,8 @@ class ComplexRangeTransitionManagerTests {
         }
 
         transitionTestHelper(
-            origin = arrayOf(1..2, 6..7, 9..10),
-            dest = arrayOf(2..3, 6..7, 10..11)
+            origin = listOf(1..2, 6..7, 9..10),
+            dest = listOf(2..3, 6..7, 10..11)
         ) {
             group {
                 transform(origin = 1..2, dest = 2..3)
@@ -238,14 +242,13 @@ class ComplexRangeTransitionManagerTests {
 
     @Test
     fun consumeElementsForTransformGroupTest() {
-        fun createIterator(ranges: Array<IntRange>): ComplexRangeFragmentListIterator<IntFragmentElement> {
-            return IntComplexRange(ranges).fragments().fragmentIterator()
+        fun createIterator(ranges: List<IntRange>): ComplexRangeFragmentListIterator<IntFragmentElement> {
+            return createComplexRange(ranges).fragments().fragmentIterator()
         }
 
         fun assertConsumed(
             expectedConsumed: Int,
-            iter: ComplexRangeFragmentListIterator<IntFragmentElement>,
-            input: Array<IntRange>,
+            input: List<IntRange>,
             groupComplexRange: IntComplexRange,
             sourceType: String, testType: String
         ) {
@@ -258,7 +261,7 @@ class ComplexRangeTransitionManagerTests {
         }
 
         fun testCaseBase(
-            origin: Array<IntRange>, dest: Array<IntRange>,
+            origin: List<IntRange>, dest: List<IntRange>,
             expectedOriginConsumed: Int, expectedDestConsumed: Int,
             isForward: Boolean
         ) {
@@ -281,12 +284,12 @@ class ComplexRangeTransitionManagerTests {
             val originGroupRange = originIter.subRange()
             val destGroupRange = destIter.subRange()
 
-            assertConsumed(expectedOriginConsumed, originIter, origin, originGroupRange, "origin", testType)
-            assertConsumed(expectedDestConsumed, destIter, dest, destGroupRange, "dest", testType)
+            assertConsumed(expectedOriginConsumed, origin, originGroupRange, "origin", testType)
+            assertConsumed(expectedDestConsumed, dest, destGroupRange, "dest", testType)
         }
 
         fun testCase(
-            origin: Array<IntRange>, dest: Array<IntRange>,
+            origin: List<IntRange>, dest: List<IntRange>,
             expectedOriginConsumed: Int, expectedDestConsumed: Int
         ) {
             // Grouping must be commutative
@@ -295,57 +298,57 @@ class ComplexRangeTransitionManagerTests {
         }
 
         testCase(
-            origin = arrayOf(1..3),
-            dest = arrayOf(1..1),
+            origin = listOf(1..3),
+            dest = listOf(1..1),
             expectedOriginConsumed = 1,
             expectedDestConsumed = 1
         )
 
         testCase(
-            origin = arrayOf(1..3),
-            dest = arrayOf(1..1, 3..3),
+            origin = listOf(1..3),
+            dest = listOf(1..1, 3..3),
             expectedOriginConsumed = 1,
             expectedDestConsumed = 2
         )
 
         testCase(
-            origin = arrayOf(1..4, 6..8),
-            dest = arrayOf(1..1, 3..4, 7..7),
+            origin = listOf(1..4, 6..8),
+            dest = listOf(1..1, 3..4, 7..7),
             expectedOriginConsumed = 1,
             expectedDestConsumed = 2
         )
 
         testCase(
-            origin = arrayOf(1..3, 5..8),
-            dest = arrayOf(1..1, 3..6),
+            origin = listOf(1..3, 5..8),
+            dest = listOf(1..1, 3..6),
             expectedOriginConsumed = 2,
             expectedDestConsumed = 2
         )
 
         testCase(
-            origin = arrayOf(1..1, 3..12, 14..16, 18..19),
-            dest = arrayOf(1..3, 6..6, 8..9, 11..14, 16..16, 19..19),
+            origin = listOf(1..1, 3..12, 14..16, 18..19),
+            dest = listOf(1..3, 6..6, 8..9, 11..14, 16..16, 19..19),
             expectedOriginConsumed = 3,
             expectedDestConsumed = 5
         )
 
         testCase(
-            origin = arrayOf(1..3, 5..8, 10..11),
-            dest = arrayOf(1..1, 3..6),
+            origin = listOf(1..3, 5..8, 10..11),
+            dest = listOf(1..1, 3..6),
             expectedOriginConsumed = 2,
             expectedDestConsumed = 2
         )
 
         testCase(
-            origin = arrayOf(1..10),
-            dest = arrayOf(0..2, 4..5, 7..11),
+            origin = listOf(1..10),
+            dest = listOf(0..2, 4..5, 7..11),
             expectedOriginConsumed = 1,
             expectedDestConsumed = 3
         )
 
         testCase(
-            origin = arrayOf(1..2, 6..7),
-            dest = arrayOf(2..3, 6..7),
+            origin = listOf(1..2, 6..7),
+            dest = listOf(2..3, 6..7),
             expectedOriginConsumed = 1,
             expectedDestConsumed = 1
         )

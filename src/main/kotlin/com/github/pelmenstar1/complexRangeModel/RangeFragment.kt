@@ -14,7 +14,9 @@ class RangeFragment<T : FragmentElement<T>>(
         get() = start.countElementsTo(endInclusive) + 1
 
     init {
-        require(start <= endInclusive) { "Invalid range parameters" }
+        require(start <= endInclusive) {
+            "Invalid range parameters"
+        }
     }
 
     /**
