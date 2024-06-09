@@ -22,7 +22,7 @@ sealed interface TransitionOperation<T : FragmentElement<T>> {
     fun efficiencyLevel(): Int
 
     /**
-     * Represents an abstract class for structural operation, such that either insert or removes a fragment.
+     * Represents an abstract class for structural operations: insertion or removal.
      */
     sealed class StructuralOperation<T : FragmentElement<T>>(val fragment: RangeFragment<T>) : TransitionOperation<T> {
         override fun efficiencyLevel(): Int {

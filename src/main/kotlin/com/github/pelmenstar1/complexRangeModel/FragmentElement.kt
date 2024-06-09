@@ -63,7 +63,7 @@ interface FragmentElement<T : FragmentElement<T>> : Comparable<T> {
  * A variation of [FragmentElement] that has a notion of distance between the elements.
  *
  * One definition of distance that has all the implementations of [FragmentElement] is
- * simple amount of elements between two [FragmentElement]'s. Such distance is called "raw".
+ * simply an amount of elements between two [FragmentElement]'s. Such distance is called "raw".
  * But there can be cases when there exists more robust definition of the distance that is expressed through given [D] type.
  * For example, if the element is a date, then distance may be a **duration** between two dates expressed as a dedicated class.
  */

@@ -1,11 +1,10 @@
 package com.github.pelmenstar1.complexRangeModel
 
 import kotlin.NoSuchElementException
-import java.util.LinkedList
 
 /**
  * Represents a linked list that exposes its underlying [RawLinkedList.Node] class
- * (unlike standard [LinkedList] class) that allows some operations to be more efficient.
+ * (unlike standard Java's LinkedList class) that allows some operations to be more efficient.
  */
 class RawLinkedList<T> : MutableList<T> {
     /**
