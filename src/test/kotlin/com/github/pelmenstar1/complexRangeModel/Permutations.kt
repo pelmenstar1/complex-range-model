@@ -40,3 +40,17 @@ fun<T> Collection<T>.allPermutations(): Sequence<Collection<T>> {
 inline fun<reified T> Array<out T>.allPermutations(): Sequence<Array<out T>> {
     return toMutableList().allPermutations().map { it.toTypedArray() }
 }
+
+fun IntRange.allSubRanges(): List<IntRange> {
+    val rangeSize = endInclusive - start + 1
+    val result = ArrayList<IntRange>()
+
+    for (length in 1..rangeSize) {
+        for(start in 0..(rangeSize - length)) {
+            val subRange = start until (start + length)
+            result.add(subRange)
+        }
+    }
+
+    return result
+}

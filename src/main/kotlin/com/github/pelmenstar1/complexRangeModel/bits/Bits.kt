@@ -1,9 +1,10 @@
 package com.github.pelmenstar1.complexRangeModel.bits
 
-internal fun nBitsSet(n: Int): Long {
-    return if (n == 64) -1L else (1L shl n) - 1
-}
+private const val WORD_MASK = -1L
 
-internal fun rangeMask(start: Int, endInclusive: Int): Long {
-    return nBitsSet(endInclusive - start + 1) shl start
+internal fun startMask(startIndex: Int) = WORD_MASK shl startIndex
+internal fun endMask(endIndex: Int) = WORD_MASK ushr (-endIndex - 1)
+
+internal fun rangeMask(startIndex: Int, endIndex: Int): Long {
+    return startMask(startIndex) and endMask(endIndex)
 }

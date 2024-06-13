@@ -41,3 +41,37 @@ private object EmptyIterator : ListIterator<Nothing> {
 }
 
 internal fun <T> emptyIterator(): ListIterator<T> = EmptyIterator
+
+internal class LimitingListIterator<T>(
+    private val baseIterator: ListIterator<T>,
+    private val maxSize: Int
+) : ListIterator<T> {
+    private var index = 0
+
+    override fun hasNext(): Boolean {
+        return index < maxSize && baseIterator.hasNext()
+    }
+
+    override fun hasPrevious(): Boolean {
+        return baseIterator.hasPrevious()
+    }
+
+    override fun next(): T {
+        if (index >= maxSize) {
+            throw NoSuchElementException()
+        }
+
+        return baseIterator.next()
+    }
+
+    override fun previous(): T {
+        return baseIterator.previous()
+    }
+
+    override fun nextIndex(): Int = baseIterator.nextIndex()
+    override fun previousIndex(): Int = baseIterator.previousIndex()
+}
+
+internal fun<T> ListIterator<T>.limitTo(size: Int): ListIterator<T> {
+    return LimitingListIterator(this, size)
+}

@@ -1,9 +1,9 @@
-package com.github.pelmenstar1.complexRangeModel.generic
+package com.github.pelmenstar1.complexRangeModel.bits
 
 import com.github.pelmenstar1.complexRangeModel.*
 
-class GenericComplexRangeTests : BaseComplexRangeTests() {
+class BitComplexRangeTests : BaseComplexRangeTests() {
     override fun createComplexRange(block: ComplexRangeBuilder<IntFragmentElement>.() -> Unit): IntComplexRange {
-        return IntComplexRange(block)
+        return BitIntComplexRange(-10, 100, block)
     }
 }

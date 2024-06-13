@@ -2,9 +2,8 @@ package com.github.pelmenstar1.complexRangeModel.bits
 
 import com.github.pelmenstar1.complexRangeModel.*
 import com.github.pelmenstar1.complexRangeModel.IntRangeFragment
-import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRange
 
-class BitArrayComplexRangeBuilder(private val limitStart: Int, private val limitEnd: Int) : ComplexRangeBuilder<IntFragmentElement> {
+class BitIntComplexRangeBuilder(private val limitStart: Int, private val limitEnd: Int) : ComplexRangeBuilder<IntFragmentElement> {
     private val bitSet = FixedBitSet(limitEnd - limitStart + 1)
 
     override fun fragment(value: IntRangeFragment) {
@@ -56,7 +55,7 @@ class BitArrayComplexRangeBuilder(private val limitStart: Int, private val limit
             ensureValidValue(value)
 
             val bitIndex = value - limitStart
-            val wordIndex = bitIndex / 64
+            val wordIndex = FixedBitSet.getWordIndex(bitIndex)
             val bitMask = 1L shl bitIndex
 
             if (currentWordIndex == wordIndex) {
@@ -97,11 +96,6 @@ class BitArrayComplexRangeBuilder(private val limitStart: Int, private val limit
     }
 
     fun build(): IntComplexRange {
-        val list = RawLinkedList<IntRangeFragment>()
-        bitSet.forEachRange { start, endInclusive ->
-            list.add(IntRangeFragment(start + limitStart, endInclusive + limitStart))
-        }
-
-        return GenericComplexRange(list)
+       return BitIntComplexRange(bitSet, limitStart, limitEnd)
     }
 }
