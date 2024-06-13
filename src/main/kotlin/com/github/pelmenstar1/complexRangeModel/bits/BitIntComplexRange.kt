@@ -169,7 +169,6 @@ internal class BitIntComplexRange(
         }
 
         override fun lastIndexOf(element: RangeFragment<IntFragmentElement>): Int {
-
             return useIfValidFragmentOr(element, -1) { startBitIndex, endBitIndex ->
                 var index = 0
 

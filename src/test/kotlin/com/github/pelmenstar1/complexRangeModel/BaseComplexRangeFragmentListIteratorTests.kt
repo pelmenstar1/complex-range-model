@@ -10,6 +10,21 @@ private typealias FragmentIterator = ComplexRangeFragmentListIterator<IntFragmen
 abstract class BaseComplexRangeFragmentListIteratorTests {
     protected abstract fun createIterator(data: Array<IntRangeFragment>): FragmentIterator
 
+    class SubRangeTestCase(val ranges: Array<IntRange>, val subRangeIndices: IntRange)
+
+    open fun iterateForwardBackwardTestData(): List<Array<IntRange>> {
+        return listOf(
+            arrayOf(1..2),
+            arrayOf(0..2),
+            arrayOf(0..63),
+            arrayOf(0..127),
+            arrayOf(1..2, 4..5),
+            arrayOf(0..2, 4..5),
+            arrayOf(1..2, 4..5, 7..8),
+            arrayOf(0..2, 4..5, 7..8, 40..63),
+        )
+    }
+
     @Test
     fun iterateForwardBackwardTest() {
         fun forwardPass(iter: FragmentIterator, expectedElements: Array<IntRangeFragment>) {
@@ -49,14 +64,15 @@ abstract class BaseComplexRangeFragmentListIteratorTests {
             forwardPass(iter, expectedFragments)
         }
 
-        testCase(arrayOf(1..2))
-        testCase(arrayOf(0..2))
-        testCase(arrayOf(0..63))
-        testCase(arrayOf(0..127))
-        testCase(arrayOf(1..2, 4..5))
-        testCase(arrayOf(0..2, 4..5))
-        testCase(arrayOf(1..2, 4..5, 7..8))
-        testCase(arrayOf(0..2, 4..5, 7..8, 40..63))
+        iterateForwardBackwardTestData().forEach { testCase(it) }
+    }
+
+    open fun iterateNextPreviousForwardTestData(): List<Array<IntRange>> {
+        return listOf(
+            arrayOf(1..1, 3..6),
+            arrayOf(1..1, 3..3, 5..6),
+            arrayOf(1..1, 3..3, 5..5, 7..9)
+        )
     }
 
     @Test
@@ -99,12 +115,21 @@ abstract class BaseComplexRangeFragmentListIteratorTests {
             assertEquals(elements.size, index)
         }
 
-        testCase(arrayOf(1..1, 3..6))
-        testCase(arrayOf(1..1, 3..3, 5..6))
-        testCase(arrayOf(1..1, 3..3, 5..5, 7..9))
+        iterateNextPreviousForwardTestData().forEach { testCase(it) }
     }
 
-
+    open fun subRangeTestData(): List<SubRangeTestCase> {
+        return listOf(
+            SubRangeTestCase(ranges = arrayOf(1..2), subRangeIndices = 0..0),
+            SubRangeTestCase(ranges = arrayOf(1..2, 4..5), subRangeIndices = 0..0),
+            SubRangeTestCase(ranges = arrayOf(1..2, 4..5), subRangeIndices = 0..1),
+            SubRangeTestCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 0..0),
+            SubRangeTestCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 0..1),
+            SubRangeTestCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 1..1),
+            SubRangeTestCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 1..2),
+            SubRangeTestCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 0..2)
+        )
+    }
 
     @Test
     fun subRangeTest() {
@@ -129,13 +154,6 @@ abstract class BaseComplexRangeFragmentListIteratorTests {
             assertContentEquals(expectedSubFragments, actualSubFragments)
         }
 
-        testCase(ranges = arrayOf(1..2), subRangeIndices = 0..0)
-        testCase(ranges = arrayOf(1..2, 4..5), subRangeIndices = 0..0)
-        testCase(ranges = arrayOf(1..2, 4..5), subRangeIndices = 0..1)
-        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 0..0)
-        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 0..1)
-        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 1..1)
-        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 1..2)
-        testCase(ranges = arrayOf(1..2, 4..5, 7..8), subRangeIndices = 0..2)
+        subRangeTestData().forEach { testCase(it.ranges, it.subRangeIndices) }
     }
 }

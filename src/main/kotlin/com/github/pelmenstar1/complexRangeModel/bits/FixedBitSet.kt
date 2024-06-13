@@ -297,8 +297,5 @@ internal class FixedBitSet {
         private const val WORD_MASK = -1L
 
         fun getWordIndex(bitIndex: Int) = bitIndex shr WORD_SHIFT
-
-        private fun startMask(startIndex: Int) = WORD_MASK shl startIndex
-        private fun endMask(endIndex: Int) = WORD_MASK ushr (-endIndex - 1)
     }
 }

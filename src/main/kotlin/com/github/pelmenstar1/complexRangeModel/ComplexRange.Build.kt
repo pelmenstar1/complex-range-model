@@ -1,5 +1,6 @@
 package com.github.pelmenstar1.complexRangeModel
 
+import com.github.pelmenstar1.complexRangeModel.bitLong.BitLongIntComplexRangeBuilder
 import com.github.pelmenstar1.complexRangeModel.bits.BitIntComplexRangeBuilder
 import com.github.pelmenstar1.complexRangeModel.generic.GenericComplexRangeBuilder
 
@@ -49,6 +50,10 @@ inline fun BitIntComplexRange(
     block: BitIntComplexRangeBuilder.() -> Unit
 ): IntComplexRange {
     return BitIntComplexRangeBuilder(limitStart, limitEnd).also(block).build()
+}
+
+inline fun BitLongIntComplexRange(limitStart: Int, block: BitLongIntComplexRangeBuilder.() -> Unit): IntComplexRange {
+    return BitLongIntComplexRangeBuilder(limitStart).also(block).build()
 }
 
 /**
