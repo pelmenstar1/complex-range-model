@@ -212,7 +212,7 @@ internal class BitIntComplexRange(
                 throw IndexOutOfBoundsException()
             }
 
-            return SubFragmentList(this, fromIndex, toIndex)
+            return SubList(this, fromIndex, toIndex)
         }
 
         override fun fragmentIterator(): ComplexRangeFragmentListIterator<IntFragmentElement> {
@@ -239,153 +239,27 @@ internal class BitIntComplexRange(
         }
     }
 
-    class SubFragmentList(
-        private val wrappingList: FragmentListImpl,
-        private val startIndex: Int,
-        private val endIndex: Int
-    ) : List<RangeFragment<IntFragmentElement>> {
-        override val size: Int
-            get() = endIndex - startIndex
+    inner class FragmentIterator : AbstractBitFragmentIterator(
+        initialBitStart = bitSet.bitStartIndex,
+        bitEndIndex = bitSet.bitEndIndex,
+        limitStart
+    ) {
+        override fun findNextSetBitIndex(start: Int): Int =
+            bitSet.findNextSetBitIndex(start)
 
-        override fun isEmpty(): Boolean {
-            return startIndex == endIndex
-        }
+        override fun findNextUnsetBitIndex(start: Int): Int =
+            bitSet.findNextUnsetBitIndex(start)
 
-        override fun get(index: Int): RangeFragment<IntFragmentElement> {
-            if (index < 0 || index >= size) {
-                throw IndexOutOfBoundsException()
-            }
+        override fun findPreviousSetBitIndex(start: Int): Int =
+            bitSet.findPreviousSetBitIndex(start)
 
-            return wrappingList[index - startIndex]
-        }
+        override fun findPreviousUnsetBitIndex(start: Int): Int =
+            bitSet.findPreviousUnsetBitIndex(start)
 
-        override fun indexOf(element: RangeFragment<IntFragmentElement>): Int {
-            return indexOfBase { indexOf(element) }
-        }
-
-        override fun lastIndexOf(element: RangeFragment<IntFragmentElement>): Int {
-            return indexOfBase { lastIndexOf(element) }
-        }
-
-        private fun indexOfBase(method: FragmentListImpl.() -> Int): Int {
-            val index = wrappingList.method()
-
-            if (index in startIndex..<endIndex) {
-                return index - startIndex
-            }
-
-            return -1
-        }
-
-        override fun contains(element: RangeFragment<IntFragmentElement>): Boolean {
-            return indexOf(element) >= 0
-        }
-
-        override fun containsAll(elements: Collection<RangeFragment<IntFragmentElement>>): Boolean {
-            return elements.all { it in this }
-        }
-
-        override fun subList(fromIndex: Int, toIndex: Int): List<RangeFragment<IntFragmentElement>> {
-            if (fromIndex < 0 || toIndex < 0 || fromIndex > toIndex) {
-                throw IllegalArgumentException("Invalid range")
-            }
-
-            val newSize = toIndex - fromIndex
-            if (newSize > size) {
-                throw IndexOutOfBoundsException()
-            }
-
-            return SubFragmentList(wrappingList, startIndex + fromIndex, startIndex + toIndex)
-        }
-
-        override fun iterator(): Iterator<RangeFragment<IntFragmentElement>> {
-            return listIterator()
-        }
-
-        override fun listIterator(): ListIterator<RangeFragment<IntFragmentElement>> {
-            return listIterator(0)
-        }
-
-        override fun listIterator(index: Int): ListIterator<RangeFragment<IntFragmentElement>> {
-            if (index < 0 || index > size) {
-                throw IndexOutOfBoundsException("index")
-            }
-
-            return wrappingList.listIterator(startIndex + index).limitTo(size)
-        }
-    }
-
-    inner class FragmentIterator : ComplexRangeFragmentListIterator<IntFragmentElement> {
-        private var _current: RangeFragment<IntFragmentElement>? = null
-        override val current: RangeFragment<IntFragmentElement>
-            get() = _current ?: throw NoSuchElementException()
-
-        private var lastFragmentStart = bitSet.bitStartIndex - 2
-        private var lastFragmentEnd = bitSet.bitStartIndex - 1
-
-        private var markedBitIndex = -1
-
-        override fun moveNext(): Boolean {
-            val setBitIndex = bitSet.findNextSetBitIndex(lastFragmentEnd + 1)
-            if (setBitIndex < 0) {
-                return false
-            }
-
-            var unsetBitIndex = bitSet.findNextUnsetBitIndex(setBitIndex)
-            if (unsetBitIndex < 0) {
-                unsetBitIndex = bitSet.bitEndIndex + 1
-            }
-
-            setFragment(setBitIndex, unsetBitIndex - 1)
-
-            return true
-        }
-
-        override fun movePrevious(): Boolean {
-            val setBitIndex = bitSet.findPreviousSetBitIndex(lastFragmentStart - 1)
-            if (setBitIndex < 0) {
-                return false
-            }
-
-            var unsetBitIndex = bitSet.findPreviousUnsetBitIndex(setBitIndex)
-            unsetBitIndex = maxOf(unsetBitIndex, -1)
-
-            setFragment(unsetBitIndex + 1, setBitIndex)
-
-            return true
-        }
-
-        override fun mark() {
-            markedBitIndex = lastFragmentStart
-        }
-
-        override fun subRange(): ComplexRange<IntFragmentElement> {
-            val markedBitIndex = markedBitIndex
-            if (markedBitIndex < 0) {
-                throw IllegalStateException("No marked element")
-            }
-
-            val newBits = bitSet.select(markedBitIndex, lastFragmentEnd)
+        override fun createSubRange(startIndex: Int, endIndex: Int): ComplexRange<IntFragmentElement> {
+            val newBits = bitSet.select(startIndex, endIndex)
 
             return BitIntComplexRange(newBits, limitStart, limitEnd)
-        }
-
-        private fun setFragment(bitStart: Int, bitEnd: Int) {
-            lastFragmentStart = bitStart
-            lastFragmentEnd = bitEnd
-
-            _current = IntRangeFragment(bitStart + limitStart, bitEnd + limitStart)
-        }
-
-        fun skipFragments(n: Int) {
-            var rem = n
-            bitSet.forEachRange { start, endInclusive ->
-                if (rem == 0) {
-                    lastFragmentStart = start
-                    lastFragmentEnd = endInclusive
-                }
-                rem--
-            }
         }
     }
 
