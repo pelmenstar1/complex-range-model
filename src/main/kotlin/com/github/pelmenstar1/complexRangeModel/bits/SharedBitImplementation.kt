@@ -135,3 +135,44 @@ internal abstract class AbstractBitFragmentIterator(
         }
     }
 }
+
+internal abstract class AbstractBitFragmentList : ComplexRangeFragmentList<IntFragmentElement> {
+    protected var _size: Int = -1
+    override val size: Int
+        get() {
+            var result = _size
+            if (result < 0) {
+                result = computeSize()
+                _size = result
+            }
+            return result
+        }
+
+    override fun iterator(): Iterator<RangeFragment<IntFragmentElement>> {
+        return listIterator()
+    }
+
+    override fun listIterator(): ListIterator<RangeFragment<IntFragmentElement>> {
+        return fragmentIterator().toListIterator()
+    }
+
+    override fun listIterator(index: Int): ListIterator<RangeFragment<IntFragmentElement>> {
+        if (index < 0) {
+            throw IndexOutOfBoundsException("index")
+        }
+
+        return fragmentIterator().also {
+            it.skip(index)
+        }.toListIterator()
+    }
+
+    override fun subList(fromIndex: Int, toIndex: Int): List<RangeFragment<IntFragmentElement>> {
+        return subListImpl(fromIndex, toIndex)
+    }
+
+    override fun containsAll(elements: Collection<RangeFragment<IntFragmentElement>>): Boolean {
+        return elements.all { it in this }
+    }
+
+    protected abstract fun computeSize(): Int
+}

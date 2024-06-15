@@ -88,19 +88,10 @@ internal class BitIntComplexRange(
         }
     }
 
-    inner class FragmentListImpl : ComplexRangeFragmentList<IntFragmentElement> {
-        private var _size = NOT_COMPUTED
-
-        override val size: Int
-            get() {
-                var s = _size
-                if (s == NOT_COMPUTED) {
-                    s = bitSet.countRanges()
-                    _size = s
-                }
-
-                return s
-            }
+    inner class FragmentListImpl : AbstractBitFragmentList() {
+        override fun computeSize(): Int {
+            return bitSet.countRanges()
+        }
 
         override fun isEmpty(): Boolean {
             return _size == 0 || bitSet.isEmpty()
@@ -109,7 +100,7 @@ internal class BitIntComplexRange(
         override fun get(index: Int): RangeFragment<IntFragmentElement> {
             val size = _size
 
-            if (index >= 0 && (size == NOT_COMPUTED || index < size)) {
+            if (index >= 0 && (size < 0 || index < size)) {
                 var seqIndex = 0
                 bitSet.forEachRange { start, endInclusive ->
                     if (seqIndex == index) {
@@ -139,10 +130,6 @@ internal class BitIntComplexRange(
             return useIfValidFragmentOr(element, false) { start, end ->
                 bitSet.containsRange(start, end)
             }
-        }
-
-        override fun containsAll(elements: Collection<RangeFragment<IntFragmentElement>>): Boolean {
-            return elements.all { it in this }
         }
 
         override fun includes(fragment: RangeFragment<IntFragmentElement>): Boolean {
@@ -200,31 +187,8 @@ internal class BitIntComplexRange(
             return defaultValue
         }
 
-        override fun subList(fromIndex: Int, toIndex: Int): List<RangeFragment<IntFragmentElement>> {
-            return subListImpl(fromIndex, toIndex)
-        }
-
         override fun fragmentIterator(): ComplexRangeFragmentListIterator<IntFragmentElement> {
             return FragmentIterator()
-        }
-
-        override fun iterator(): Iterator<RangeFragment<IntFragmentElement>> {
-            return listIterator()
-        }
-
-        override fun listIterator(): ListIterator<RangeFragment<IntFragmentElement>> {
-            return fragmentIterator().toListIterator()
-        }
-
-        override fun listIterator(index: Int): ListIterator<RangeFragment<IntFragmentElement>> {
-            // Force to compute real size
-            if (index < 0 || index >= size) {
-                throw IndexOutOfBoundsException()
-            }
-
-            return FragmentIterator().also {
-                it.skip(index)
-            }.toListIterator()
         }
     }
 
@@ -253,12 +217,12 @@ internal class BitIntComplexRange(
     }
 
     inner class ElementsCollection : Collection<IntFragmentElement> {
-        private var _size = NOT_COMPUTED
+        private var _size = -1
 
         override val size: Int
             get() {
                 var result = _size
-                if (result == NOT_COMPUTED) {
+                if (result < 0) {
                     result = bitSet.countSetBits()
                     _size = result
                 }
@@ -287,9 +251,5 @@ internal class BitIntComplexRange(
         override fun findNextSetBitIndex(bitStart: Int): Int {
             return bitSet.findNextSetBitIndex(bitStart)
         }
-    }
-
-    companion object {
-        private const val NOT_COMPUTED = -2
     }
 }

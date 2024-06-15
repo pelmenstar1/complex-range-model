@@ -1,6 +1,7 @@
 package com.github.pelmenstar1.complexRangeModel.bitLong
 
 import com.github.pelmenstar1.complexRangeModel.*
+import com.github.pelmenstar1.complexRangeModel.bits.*
 import com.github.pelmenstar1.complexRangeModel.bits.AbstractBitElementsIterator
 import com.github.pelmenstar1.complexRangeModel.bits.AbstractBitFragmentIterator
 import com.github.pelmenstar1.complexRangeModel.bits.endMask
@@ -158,21 +159,8 @@ internal class BitLongIntComplexRange(
         }
     }
 
-    inner class FragmentsImpl : ComplexRangeFragmentList<IntFragmentElement> {
-        private var _size = -1
-
-        override val size: Int
-            get() {
-                var result = _size
-                if (result < 0) {
-                    result = computeSize()
-                    _size = result
-                }
-
-                return result
-            }
-
-        private fun computeSize(): Int {
+    inner class FragmentsImpl : AbstractBitFragmentList() {
+        override fun computeSize(): Int {
             var result = 0
             forEachRange { _, _ ->
                 result++
@@ -194,10 +182,6 @@ internal class BitLongIntComplexRange(
 
                 bits and wideMask == mask
             }
-        }
-
-        override fun containsAll(elements: Collection<RangeFragment<IntFragmentElement>>): Boolean {
-            return elements.all { it in this }
         }
 
         override fun includes(fragment: RangeFragment<IntFragmentElement>): Boolean {
@@ -262,28 +246,6 @@ internal class BitLongIntComplexRange(
             }
 
             return default
-        }
-
-        override fun subList(fromIndex: Int, toIndex: Int): List<RangeFragment<IntFragmentElement>> {
-            return subListImpl(fromIndex, toIndex)
-        }
-
-        override fun iterator(): Iterator<RangeFragment<IntFragmentElement>> {
-            return listIterator()
-        }
-
-        override fun listIterator(): ListIterator<RangeFragment<IntFragmentElement>> {
-            return fragmentIterator().toListIterator()
-        }
-
-        override fun listIterator(index: Int): ListIterator<RangeFragment<IntFragmentElement>> {
-            if (index < 0) {
-                throw IndexOutOfBoundsException("index")
-            }
-
-            return FragmentsIterator().also {
-                it.skip(index)
-            }.toListIterator()
         }
 
         override fun fragmentIterator(): ComplexRangeFragmentListIterator<IntFragmentElement> {
