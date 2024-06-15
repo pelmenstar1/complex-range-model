@@ -3,7 +3,8 @@ package com.github.pelmenstar1.complexRangeModel.bits
 import com.github.pelmenstar1.complexRangeModel.*
 
 internal abstract class AbstractBitElementsIterator(
-    private var currentBitIndex: Int = 0
+    private val limitStart: Int,
+    private var currentBitIndex: Int = 0,
 ) : Iterator<IntFragmentElement> {
     private var nextSetBitIndex = 0
     private var isNextSetBitIndexDirty = true
@@ -35,7 +36,7 @@ internal abstract class AbstractBitElementsIterator(
         currentBitIndex = nextIndex + 1
         isNextSetBitIndexDirty = true
 
-        return IntFragmentElement(nextIndex)
+        return IntFragmentElement(nextIndex + limitStart)
     }
 }
 

@@ -60,11 +60,13 @@ internal class LimitingListIterator<T>(
         if (index >= maxSize) {
             throw NoSuchElementException()
         }
+        index++
 
         return baseIterator.next()
     }
 
     override fun previous(): T {
+        index--
         return baseIterator.previous()
     }
 

@@ -294,37 +294,9 @@ internal class BitIntComplexRange(
         override fun iterator(): Iterator<IntFragmentElement> = ElementsIterator()
     }
 
-    inner class ElementsIterator : Iterator<IntFragmentElement> {
-        private var currentBitIndex = 0
-        private var nextSetBitIndex = 0
-        private var isNextSetBitIndexDirty = true
-
-        private fun findNextSetBit(): Int {
-            var result = nextSetBitIndex
-
-            if (isNextSetBitIndexDirty) {
-                result = bitSet.findNextSetBitIndex(currentBitIndex)
-                nextSetBitIndex = result
-                isNextSetBitIndexDirty = false
-            }
-
-            return result
-        }
-
-        override fun hasNext(): Boolean {
-            return findNextSetBit() >= 0
-        }
-
-        override fun next(): IntFragmentElement {
-            val nextIndex = findNextSetBit()
-            if (nextIndex < 0) {
-                throw NoSuchElementException()
-            }
-
-            currentBitIndex = nextIndex + 1
-            isNextSetBitIndexDirty = true
-
-            return IntFragmentElement(nextIndex)
+    inner class ElementsIterator : AbstractBitElementsIterator(limitStart, currentBitIndex = bitSet.bitStartIndex) {
+        override fun findNextSetBitIndex(bitStart: Int): Int {
+            return bitSet.findNextSetBitIndex(bitStart)
         }
     }
 

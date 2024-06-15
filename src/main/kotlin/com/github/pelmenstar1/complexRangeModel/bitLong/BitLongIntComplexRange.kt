@@ -365,7 +365,7 @@ internal class BitLongIntComplexRange(
         }
     }
 
-    inner class ElementsIterator: AbstractBitElementsIterator() {
+    inner class ElementsIterator: AbstractBitElementsIterator(limitStart) {
         override fun findNextSetBitIndex(bitStart: Int): Int {
             return this@BitLongIntComplexRange.findNextSetBitIndex(bitStart)
         }

@@ -16,12 +16,7 @@ internal class ComplexRangeElementCollection<T : FragmentElement<T>>(
         }
 
     private fun computeSize(): Int {
-        var result = 0
-        fragments.forEach {
-            result += it.elementCount
-        }
-
-        return result
+        return fragments.sumOf { it.elementCount }
     }
 
     override fun isEmpty(): Boolean {
@@ -29,13 +24,7 @@ internal class ComplexRangeElementCollection<T : FragmentElement<T>>(
     }
 
     override fun contains(element: T): Boolean {
-        fragments.forEach {
-            if (element in it) {
-                return true
-            }
-        }
-
-        return false
+        return fragments.any { element in it }
     }
 
     override fun containsAll(elements: Collection<T>): Boolean {
@@ -76,8 +65,5 @@ internal class ComplexRangeElementCollection<T : FragmentElement<T>>(
             lastReturnedElement = le
             return le
         }
-
     }
-
-
 }

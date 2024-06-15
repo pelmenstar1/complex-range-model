@@ -20,6 +20,19 @@ class ComplexRangeElementCollectionTests {
     }
 
     @Test
+    fun isEmptyTest() {
+        fun testCase(ranges: Array<IntRange>, expected: Boolean) {
+            val collection = createCollection(ranges)
+            val actual = collection.isEmpty()
+
+            assertEquals(expected, actual)
+        }
+
+        testCase(emptyArray(), expected = true)
+        testCase(arrayOf(1..2), expected = false)
+    }
+
+    @Test
     fun containsTest() {
         fun testCase(ranges: Array<IntRange>, needle: Int, expected: Boolean) {
             val collection = createCollection(ranges)
@@ -32,6 +45,23 @@ class ComplexRangeElementCollectionTests {
         testCase(ranges = arrayOf(1..2), needle = 1, expected = true)
         testCase(ranges = arrayOf(1..2), needle = 3, expected = false)
         testCase(ranges = arrayOf(1..2, 5..7), needle = 7, expected = true)
+    }
+
+    @Test
+    fun containsAllTest() {
+        fun testCase(ranges: Array<IntRange>, needles: Array<Int>, expected: Boolean) {
+            val collection = createCollection(ranges)
+            val actual = collection.containsAll(needles.map { IntFragmentElement(it) })
+
+            assertEquals(expected, actual)
+        }
+
+        testCase(emptyArray(), needles = arrayOf(1), expected = false)
+        testCase(arrayOf(1..2), needles = arrayOf(1), expected = true)
+        testCase(arrayOf(1..2), needles = arrayOf(1, 2), expected = true)
+        testCase(arrayOf(1..2), needles = arrayOf(1), expected = true)
+        testCase(arrayOf(1..2, 5..6), needles = arrayOf(1, 6), expected = true)
+        testCase(arrayOf(1..2, 5..6), needles = arrayOf(1, 6, 7), expected = false)
     }
 
     @Test
