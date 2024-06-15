@@ -43,8 +43,8 @@ abstract class BaseComplexRangeBuilderTests {
                 values.forEach { value(IntFragmentElement(it)) }
             }
 
-            val expectedFragments = expected.mapToArray { IntRangeFragment(it) }
-            val actualFragments = actual.fragments().toTypedArray()
+            val expectedFragments = expected.map { IntRangeFragment(it) }
+            val actualFragments = actual.fragments().toList()
 
             assertContentEquals(expectedFragments, actualFragments, "values: ${values.contentToString()}")
         }
@@ -67,11 +67,11 @@ abstract class BaseComplexRangeBuilderTests {
     fun createWithValuesTest() {
         fun testHelperBase(values: Array<out Int>, expected: Array<IntRange>) {
             val actual = createComplexRange {
-                values(values.mapToArray { IntFragmentElement(it) })
+                values(values.map { IntFragmentElement(it) })
             }
 
-            val expectedFragments = expected.mapToArray { IntRangeFragment(it) }
-            val actualFragments = actual.fragments().toTypedArray()
+            val expectedFragments = expected.map { IntRangeFragment(it) }
+            val actualFragments = actual.fragments().toList()
 
             assertContentEquals(expectedFragments, actualFragments, "values: ${values.contentToString()}")
         }
@@ -138,8 +138,8 @@ abstract class BaseComplexRangeBuilderTests {
             fragmentRanges.forEach { fragment(it) }
         }
 
-        val expectedFragments = expected.mapToArray { IntRangeFragment(it) }
-        val actualFragments = actual.fragments().toTypedArray()
+        val expectedFragments = expected.map { IntRangeFragment(it) }
+        val actualFragments = actual.fragments().toList()
 
         assertContentEquals(expectedFragments, actualFragments)
     }

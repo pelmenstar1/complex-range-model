@@ -8,26 +8,26 @@ import kotlin.test.assertTrue
 private typealias FragmentIterator = ComplexRangeFragmentListIterator<IntFragmentElement>
 
 abstract class BaseComplexRangeFragmentListIteratorTests {
-    protected abstract fun createIterator(data: Array<IntRangeFragment>): FragmentIterator
+    protected abstract fun createIterator(data: List<IntRangeFragment>): FragmentIterator
 
     class SubRangeTestCase(val ranges: Array<IntRange>, val subRangeIndices: IntRange)
 
-    open fun iterateForwardBackwardTestData(): List<Array<IntRange>> {
+    open fun iterateForwardBackwardTestData(): List<List<IntRange>> {
         return listOf(
-            arrayOf(1..2),
-            arrayOf(0..2),
-            arrayOf(0..63),
-            arrayOf(0..127),
-            arrayOf(1..2, 4..5),
-            arrayOf(0..2, 4..5),
-            arrayOf(1..2, 4..5, 7..8),
-            arrayOf(0..2, 4..5, 7..8, 40..63),
+            listOf(1..2),
+            listOf(0..2),
+            listOf(0..63),
+            listOf(0..127),
+            listOf(1..2, 4..5),
+            listOf(0..2, 4..5),
+            listOf(1..2, 4..5, 7..8),
+            listOf(0..2, 4..5, 7..8, 40..63),
         )
     }
 
     @Test
     fun iterateForwardBackwardTest() {
-        fun forwardPass(iter: FragmentIterator, expectedElements: Array<IntRangeFragment>) {
+        fun forwardPass(iter: FragmentIterator, expectedElements: List<IntRangeFragment>) {
             var index = 0
 
             do {
@@ -40,7 +40,7 @@ abstract class BaseComplexRangeFragmentListIteratorTests {
             assertEquals(expectedElements.size, index)
         }
 
-        fun backwardPass(iter: FragmentIterator, expectedElements: Array<IntRangeFragment>) {
+        fun backwardPass(iter: FragmentIterator, expectedElements: List<IntRangeFragment>) {
             var index = expectedElements.size - 1
 
             do {
@@ -53,8 +53,8 @@ abstract class BaseComplexRangeFragmentListIteratorTests {
             assertEquals(-1, index)
         }
 
-        fun testCase(elements: Array<IntRange>) {
-            val expectedFragments = elements.mapToArray { IntRangeFragment(it) }
+        fun testCase(elements: List<IntRange>) {
+            val expectedFragments = elements.map { IntRangeFragment(it) }
 
             val iter = createIterator(expectedFragments)
             iter.moveNext()
@@ -78,7 +78,7 @@ abstract class BaseComplexRangeFragmentListIteratorTests {
     @Test
     fun iterateNextPreviousForwardTest() {
         fun testCase(elements: Array<IntRange>) {
-            val expectedFragments = elements.mapToArray { IntRangeFragment(it) }
+            val expectedFragments = elements.map { IntRangeFragment(it) }
 
             val iter = createIterator(expectedFragments)
             var index = 1
@@ -134,7 +134,7 @@ abstract class BaseComplexRangeFragmentListIteratorTests {
     @Test
     fun subRangeTest() {
         fun testCase(ranges: Array<IntRange>, subRangeIndices: IntRange) {
-            val fragments = ranges.mapToArray { IntRangeFragment(it) }
+            val fragments = ranges.map { IntRangeFragment(it) }
             val iter = createIterator(fragments)
 
             repeat(subRangeIndices.first + 1) {
@@ -148,8 +148,8 @@ abstract class BaseComplexRangeFragmentListIteratorTests {
 
             val subRange = iter.subRange()
 
-            val expectedSubFragments = fragments.sliceArray(subRangeIndices)
-            val actualSubFragments = subRange.fragments().toTypedArray()
+            val expectedSubFragments = fragments.subList(subRangeIndices.first, subRangeIndices.last + 1)
+            val actualSubFragments = subRange.fragments().toList()
 
             assertContentEquals(expectedSubFragments, actualSubFragments)
         }

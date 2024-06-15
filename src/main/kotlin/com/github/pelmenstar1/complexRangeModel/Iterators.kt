@@ -21,10 +21,6 @@ internal fun <T> Iterator<T>.contentEquals(otherIterator: Iterator<T>): Boolean 
     return !otherIterator.hasNext()
 }
 
-internal inline fun<T, reified R> Array<T>.mapToArray(mapping: (T) -> R): Array<R> {
-    return Array(size) { i -> mapping(get(i)) }
-}
-
 private object EmptyIterator : ListIterator<Nothing> {
     override fun hasNext(): Boolean = false
     override fun hasPrevious(): Boolean = false
