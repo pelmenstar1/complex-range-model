@@ -41,6 +41,15 @@ interface ComplexRangeFragmentListIterator<T : FragmentElement<T>> {
      * The start fragment is the marked one (by [mark] method), the end fragment is the [current] fragment.
      */
     fun subRange(): ComplexRange<T>
+
+    fun skip(n: Int) {
+        repeat(n) {
+            val result = moveNext()
+            if (!result) {
+                throw IllegalStateException("Not enough elements")
+            }
+        }
+    }
 }
 
 fun<T : FragmentElement<T>> ComplexRangeFragmentListIterator<T>.toListIterator(): ListIterator<RangeFragment<T>> {
@@ -62,8 +71,6 @@ internal fun ComplexRangeFragmentListIterator<*>.contentEquals(
             return false
         }
     }
-
-    return true
 }
 
 private class FragmentListIteratorToListIterator<T : FragmentElement<T>>(
@@ -182,6 +189,25 @@ interface ComplexRangeFragmentList<T : FragmentElement<T>> : List<RangeFragment<
             return EmptyComplexRangeFragmentList as ComplexRangeFragmentList<T>
         }
     }
+}
+
+internal fun<T : FragmentElement<T>> ComplexRangeFragmentList<T>.subListImpl(fromIndex: Int, toIndex: Int): List<RangeFragment<T>> {
+    if (fromIndex < 0 || toIndex < 0 || fromIndex > toIndex) {
+        throw IllegalArgumentException("Invalid range")
+    }
+
+    val newSize = toIndex - fromIndex
+    when {
+        newSize == 0 -> return emptyList()
+        newSize > size -> throw IndexOutOfBoundsException()
+    }
+
+    val iterator = fragmentIterator()
+    iterator.skip(fromIndex + 1)
+    iterator.mark()
+    iterator.skip(toIndex - fromIndex - 1)
+
+    return iterator.subRange().fragments()
 }
 
 private object EmptyComplexRangeFragmentList : ComplexRangeFragmentList<Nothing> {

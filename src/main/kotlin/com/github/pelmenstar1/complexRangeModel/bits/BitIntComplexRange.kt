@@ -102,8 +102,6 @@ internal class BitIntComplexRange(
                 return s
             }
 
-        fun getRawSize(): Int = _size
-
         override fun isEmpty(): Boolean {
             return _size == 0 || bitSet.isEmpty()
         }
@@ -203,16 +201,7 @@ internal class BitIntComplexRange(
         }
 
         override fun subList(fromIndex: Int, toIndex: Int): List<RangeFragment<IntFragmentElement>> {
-            if (fromIndex < 0 || toIndex < 0 || fromIndex > toIndex) {
-                throw IllegalArgumentException("Invalid range")
-            }
-
-            val newSize = toIndex - fromIndex
-            if (newSize > size) {
-                throw IndexOutOfBoundsException()
-            }
-
-            return SubList(this, fromIndex, toIndex)
+            return subListImpl(fromIndex, toIndex)
         }
 
         override fun fragmentIterator(): ComplexRangeFragmentListIterator<IntFragmentElement> {
@@ -234,7 +223,7 @@ internal class BitIntComplexRange(
             }
 
             return FragmentIterator().also {
-                it.skipFragments(index)
+                it.skip(index)
             }.toListIterator()
         }
     }

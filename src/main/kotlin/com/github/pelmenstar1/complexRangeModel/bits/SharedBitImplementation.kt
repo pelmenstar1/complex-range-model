@@ -110,7 +110,7 @@ internal abstract class AbstractBitFragmentIterator(
     protected abstract fun findPreviousUnsetBitIndex(start: Int): Int
     protected abstract fun createSubRange(startIndex: Int, endIndex: Int): ComplexRange<IntFragmentElement>
 
-    fun skipFragments(n: Int) {
+    override fun skip(n: Int) {
         var bitStart = 0
         var rem = n
 
