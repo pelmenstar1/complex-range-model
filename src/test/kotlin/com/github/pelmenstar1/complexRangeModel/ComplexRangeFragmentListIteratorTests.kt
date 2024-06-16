@@ -89,26 +89,4 @@ class ComplexRangeFragmentListIteratorTests {
         testCase(listOf(1..1, 3..3))
         testCase(listOf(1..1, 3..3, 5..5))
     }
-
-    @Test
-    fun contentEqualsTest() {
-        fun testCase(fragments1: List<IntRange>, fragments2: List<IntRange>, expected: Boolean) {
-            val iterator1 = TestFragmentListIterator(fragments1)
-            val iterator2 = TestFragmentListIterator(fragments2)
-            val actual = iterator1.contentEquals(iterator2)
-
-            assertEquals(expected, actual)
-        }
-
-        testCase(emptyList(), emptyList(), expected = true)
-        testCase(listOf(1..1), emptyList(), expected = false)
-        testCase(emptyList(), listOf(1..1), expected = false)
-        testCase(listOf(1..1), listOf(1..1), expected = true)
-        testCase(listOf(1..1), listOf(2..2), expected = false)
-        testCase(listOf(1..1), listOf(1..1, 2..2), expected = false)
-        testCase(listOf(1..1, 2..2), listOf(1..1), expected = false)
-        testCase(listOf(1..1, 2..2), listOf(1..1, 2..2), expected = true)
-        testCase(listOf(1..1, 2..2, 3..3), listOf(1..1, 2..2), expected = false)
-        testCase(listOf(1..1, 2..2, 3..3), listOf(1..1, 2..2, 3..3), expected = true)
-    }
 }

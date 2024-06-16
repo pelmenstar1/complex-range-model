@@ -56,23 +56,6 @@ fun<T : FragmentElement<T>> ComplexRangeFragmentListIterator<T>.toListIterator()
     return FragmentListIteratorToListIterator(this)
 }
 
-internal fun ComplexRangeFragmentListIterator<*>.contentEquals(
-    otherIterator: ComplexRangeFragmentListIterator<*>
-): Boolean {
-    while(true) {
-        val moveRes = moveNext()
-        val otherMoveRes = otherIterator.moveNext()
-
-        if (!moveRes || !otherMoveRes) {
-            return moveRes == otherMoveRes
-        }
-
-        if (current != otherIterator.current) {
-            return false
-        }
-    }
-}
-
 private class FragmentListIteratorToListIterator<T : FragmentElement<T>>(
     private val iterator: ComplexRangeFragmentListIterator<T>
 ) : ListIterator<RangeFragment<T>> {

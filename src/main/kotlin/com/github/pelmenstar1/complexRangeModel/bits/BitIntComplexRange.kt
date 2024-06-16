@@ -1,10 +1,11 @@
 package com.github.pelmenstar1.complexRangeModel.bits
 
 import com.github.pelmenstar1.complexRangeModel.*
+import com.github.pelmenstar1.complexRangeModel.bitLong.BitLongIntComplexRange
 
 internal class BitIntComplexRange(
-    private val bitSet: FixedBitSet,
-    private val limitStart: Int,
+    internal val bitSet: FixedBitSet,
+    internal val limitStart: Int,
     private val limitEnd: Int,
 ) : ComplexRange<IntFragmentElement> {
     private var fragments: FragmentListImpl? = null
@@ -50,9 +51,108 @@ internal class BitIntComplexRange(
     override fun equals(other: Any?): Boolean {
         return when {
             other === this -> true
-            other is ComplexRange<*> -> fragments().fragmentIterator().contentEquals(other.fragments().fragmentIterator())
+            other is BitIntComplexRange -> equalsToBitIntComplexRange(other)
+            other is BitLongIntComplexRange -> equalsToBitLongIntComplexRange(other)
+            other is ComplexRange<*> -> equalsToGenericComplexRange(other)
             else -> false
         }
+    }
+
+    private inline fun<T> equalsToComplexRange(
+        moveNext: () -> Boolean,
+        currentFragmentStart: () -> T,
+        currentFragmentEnd: () -> T,
+        equalElements: (Int, T) -> Boolean
+    ): Boolean {
+        var thisStart = bitSet.bitStartIndex
+
+        while (true) {
+            val thisSetBitIndex = bitSet.findNextSetBitIndex(thisStart)
+            val otherMoveResult = moveNext()
+
+            if (thisSetBitIndex < 0 || !otherMoveResult) {
+                return thisSetBitIndex < 0 && !otherMoveResult
+            }
+
+            var thisUnsetBitIndex = bitSet.findNextUnsetBitIndex(thisSetBitIndex)
+            if (thisUnsetBitIndex < 0) {
+                thisUnsetBitIndex = bitSet.bitEndIndex + 1
+            }
+
+            val thisFragmentStart = thisSetBitIndex + limitStart
+            val thisFragmentEnd = thisUnsetBitIndex + limitStart - 1
+
+            val otherFragmentStart = currentFragmentStart()
+            val otherFragmentEnd = currentFragmentEnd()
+
+            if (!equalElements(thisFragmentStart, otherFragmentStart) || !equalElements(thisFragmentEnd, otherFragmentEnd)) {
+                return false
+            }
+
+            thisStart = thisUnsetBitIndex + 1
+        }
+    }
+
+    private fun equalsToBitIntComplexRange(other: BitIntComplexRange): Boolean {
+        val otherBitSet = other.bitSet
+        val otherLimitStart = other.limitStart
+
+        var otherStart = otherBitSet.bitStartIndex
+        var setBitIndex = -1
+
+        return equalsToComplexRange(
+            moveNext = {
+                setBitIndex = otherBitSet.findNextSetBitIndex(otherStart)
+                setBitIndex >= 0
+            },
+            currentFragmentStart = { setBitIndex + otherLimitStart },
+            currentFragmentEnd = {
+                var unsetBitIndex = otherBitSet.findNextUnsetBitIndex(setBitIndex)
+                if (unsetBitIndex < 0) {
+                    unsetBitIndex = otherBitSet.bitEndIndex + 1
+                }
+                otherStart = unsetBitIndex + 1
+
+                unsetBitIndex + otherLimitStart - 1
+            },
+            equalElements = { a, b -> a == b }
+        )
+    }
+
+    private fun equalsToBitLongIntComplexRange(other: BitLongIntComplexRange): Boolean {
+        val otherLimitStart = other.limitStart
+
+        var otherStart = 0
+        var setBitIndex = -1
+
+        return equalsToComplexRange(
+            moveNext = {
+                setBitIndex = other.findNextSetBitIndex(otherStart)
+                setBitIndex >= 0
+            },
+            currentFragmentStart = { setBitIndex + otherLimitStart },
+            currentFragmentEnd = {
+                var unsetBitIndex = other.findNextUnsetBitIndex(setBitIndex)
+                if (unsetBitIndex < 0) {
+                    unsetBitIndex = 64
+                }
+                otherStart = unsetBitIndex + 1
+
+                unsetBitIndex + otherLimitStart - 1
+            },
+            equalElements = { a, b -> a == b }
+        )
+    }
+
+    private fun equalsToGenericComplexRange(other: ComplexRange<*>): Boolean {
+        val fragIter = other.fragments().fragmentIterator()
+
+        return equalsToComplexRange(
+            moveNext = { fragIter.moveNext() },
+            currentFragmentStart = { fragIter.current.start },
+            currentFragmentEnd = { fragIter.current.endInclusive },
+            equalElements = { a, b -> b is IntFragmentElement && a == b.value }
+        )
     }
 
     override fun hashCode(): Int {

@@ -83,7 +83,7 @@ abstract class BaseComplexRangeTests {
 
     abstract fun createComplexRange(block: ComplexRangeBuilder<IntFragmentElement>.() -> Unit): IntComplexRange
 
-    private fun createComplexRange(ranges: Array<IntRange>): IntComplexRange {
+    protected fun createComplexRange(ranges: Array<IntRange>): IntComplexRange {
         return createComplexRange {
             ranges.forEach { fragment(it) }
         }

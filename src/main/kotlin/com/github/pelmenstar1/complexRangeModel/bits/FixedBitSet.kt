@@ -282,6 +282,18 @@ internal class FixedBitSet {
     }
 
     override fun equals(other: Any?): Boolean {
+        if (other === this) {
+            return true
+        }
+
+        if (other !is FixedBitSet) {
+            return false
+        }
+
+        if (maxSetBits() != other.maxSetBits()) {
+            return false
+        }
+
         return other is FixedBitSet && words.contentEquals(other.words)
     }
 
